@@ -1,4 +1,7 @@
 <div class="page-bg">
+
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
     <h2 class="form">படிவம் 5</h2>
 
     <h2 class="form-title">
@@ -22,7 +25,7 @@
 
     </label>
 
-    <table class="form-table">
+    <table mobileCards class="form-table">
         <thead>
             <tr>
                 <th>வ. எண்</th>
@@ -35,7 +38,7 @@
         </thead>
 
         <tbody>
-            <tr *ngFor="let row of form5List; let i = index" [class.submitted-row]="row.submitted">
+            <tr *ngFor="let row of form5List; let i = index" [class.submitted-row]="row.hasMembers">
 
                 <td>{{ i + 1 }}</td>
                 <td>{{ row.society_name }}</td>
@@ -43,8 +46,8 @@
                 <td>{{ row.women }}</td>
                 <td>{{ row.general }}</td>
                 <td>
-                    <button class="add-btn" [disabled]="row.submitted" (click)="addSociety(row)">
-                        {{ row.submitted ? 'சமர்ப்பிக்கப்பட்டது' : 'சேர்க்க +' }}
+                    <button class="add-btn" (click)="addSociety(row)">
+                        {{ row.hasMembers ? 'திருத்த ✎' : 'சேர்க்க +' }}
                     </button>
                 </td>
             </tr>

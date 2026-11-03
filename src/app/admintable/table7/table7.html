@@ -24,17 +24,23 @@
 
     </div>
 
-    <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
-        {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
-    </button>
+    <div class="action-group">
+        <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
+            {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+        </button>
 
-    <button class="export-btn" (click)="downloadPdf()">
-        📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
-    </button>
+        <button class="export-btn" (click)="downloadPdf()">
+            📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+        </button>
+    </div>
 
 </div>
 
 <!-- ABSTRACT (DISTRICT/ZONE-WISE SUMMARY) TABLE -->
+<!-- FORM HEADING (above the table) -->
+<h2 class="form-heading">படிவம் 9</h2>
+<div class="table-source">அட்டவணை 9 (பதிவு படிவம் 9-லிருந்து)</div>
+
 <div class="table-scroll-wrapper" *ngIf="viewMode === 'abstract'">
 
     <table class="report-table abstract-table" id="abstractTable">
@@ -42,22 +48,23 @@
         <thead>
 
             <tr class="top-header">
-                <th colspan="9">
-                    மாவட்டம் / சரகம் வாரியான சுருக்க எண்ணிக்கை விவரம்
+                <th colspan="10">
+                    படிவம் 9 &nbsp;-&nbsp; தேர்தலில் போட்டியிடும் நிர்வாகக்குழு உறுப்பினர்களின் வாக்குப்பதிவு விவரங்கள் (சுருக்கம்)
                 </th>
             </tr>
 
             <tr class="top-sub-header">
-                <th colspan="9">
-                    துறை -- {{ department_name }}
+                <th colspan="10">
+                    துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                 </th>
             </tr>
 
             <tr class="main-header">
-                <th>வ.எண்</th>
+                <th>வ. எண்</th>
                 <th>மாவட்டம்</th>
                 <th>சரகம்</th>
-                <th>சங்கங்களின் எண்ணிக்கை</th>
+                <th>வாக்குப்பதிவு நடத்தப்பட வேண்டிய<br> சங்கங்களின் எண்ணிக்கை</th>
+                <th>தேர்தல் நடத்தி வாக்குப்பதிவு நடைபெற்ற<br> சங்கங்களின் எண்ணிக்கை</th>
                 <th>மொத்த வாக்காளர்களின் எண்ணிக்கை</th>
                 <th>பதிவான வாக்குகளின் எண்ணிக்கை</th>
                 <th>வாக்குப்பதிவு (%)</th>
@@ -65,11 +72,24 @@
                 <th>வாக்குப்பதிவின் போது நிறுத்தப்பட்ட<br> சங்கங்களின் எண்ணிக்கை</th>
             </tr>
 
+            <tr class="col-number-row">
+                <th class="col-number-cell">1</th>
+                <th class="col-number-cell">2</th>
+                <th class="col-number-cell">3</th>
+                <th class="col-number-cell">4</th>
+                <th class="col-number-cell">5</th>
+                <th class="col-number-cell">6</th>
+                <th class="col-number-cell">7</th>
+                <th class="col-number-cell">8</th>
+                <th class="col-number-cell">9</th>
+                <th class="col-number-cell">10</th>
+            </tr>
+
         </thead>
 
         <tbody>
             <tr *ngIf="abstractRows.length === 0">
-                <td colspan="9" class="empty-table-message">
+                <td colspan="10" class="empty-table-message">
                     தயவுசெய்து முதலில் படிவம் 7-ஐ பூர்த்தி செய்யவும்.
                 </td>
             </tr>
@@ -79,6 +99,7 @@
                 <td class="text-left">{{ a.district_name }}</td>
                 <td class="text-left">{{ a.zone_name }}</td>
                 <td>{{ a.society_count }}</td>
+                <td>{{ a.polling_held_count }}</td>
                 <td>{{ a.total_voters }}</td>
                 <td>{{ a.casted_votes_count }}</td>
                 <td>{{ a.voting_percentage }}</td>
@@ -88,8 +109,10 @@
 
             <!-- GRAND TOTAL -->
             <tr *ngIf="abstractRows.length > 0" class="grand-total-row">
-                <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
+                <td colspan="2" class="text-left"><strong>மொத்தம்</strong></td>
+                <td><strong>{{ abstractRows.length }}</strong></td>
                 <td><strong>{{ grandTotal.society_count }}</strong></td>
+                <td><strong>{{ grandTotal.polling_held_count }}</strong></td>
                 <td><strong>{{ grandTotal.total_voters }}</strong></td>
                 <td><strong>{{ grandTotal.casted_votes_count }}</strong></td>
                 <td><strong>{{ grandTotal.voting_percentage }}</strong></td>
@@ -111,15 +134,15 @@
 
             <!-- TITLE -->
             <tr class="top-header">
-                <th colspan="19">
-                    தேர்தலில் போட்டியிடும் நிர்வாகக்குழு உறுப்பினர்களின் வாக்குப்பதிவு விவரங்கள்
+                <th colspan="21">
+                    படிவம் 9 &nbsp;-&nbsp; தேர்தலில் போட்டியிடும் நிர்வாகக்குழு உறுப்பினர்களின் வாக்குப்பதிவு விவரங்கள்
                 </th>
             </tr>
 
             <!-- DEPARTMENT -->
             <tr class="top-sub-header">
-                <th colspan="19">
-                    துறை -- {{ department_name }}
+                <th colspan="21">
+                    துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                 </th>
             </tr>
 
@@ -128,7 +151,9 @@
                 <th rowspan="2" class="col-small">வ.எண்</th>
                 <th rowspan="2" class="col-medium">மாவட்ட தேர்தல் அலுவலர் மாவட்டம்/மண்டலம்</th>
                 <th rowspan="2" class="col-medium">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
-                <th rowspan="2" class="col-wide">வாக்குப்பதிவு நடைபெறும்<br> சங்கங்களின் பெயர்</th>
+                <th rowspan="2" class="col-wide">இறுதி வேட்பாளர் பட்டியல்படி வாக்குப்பதிவு நடைபெற வேண்டிய<br> சங்கங்களின் பெயர்</th>
+                <th rowspan="2">இறுதி வேட்பாளர் பட்டியல்படி வாக்குப்பதிவு நடைபெற வேண்டிய<br> சங்கங்களின் எண்ணிக்கை</th>
+                <th rowspan="2">தேர்தல் நடத்தி வாக்குப்பதிவு நடைபெற்ற<br> சங்கங்களின் எண்ணிக்கை</th>
 
                 <th colspan="4">தேர்ந்தெடுக்கப்பட வேண்டிய நிர்வாகக்குழு <br>இயக்குநர்களின் எண்ணிக்கை</th>
 
@@ -161,7 +186,7 @@
 
         <tbody>
             <tr *ngIf="tableRows.length === 0">
-                <td colspan="19" class="empty-table-message">
+                <td colspan="21" class="empty-table-message">
                     தயவுசெய்து முதலில் படிவம் 7-ஐ பூர்த்தி செய்யவும்.
                 </td>
             </tr>
@@ -172,6 +197,8 @@
                 <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan" class="col-medium">{{ r.district_name }}</td>
                 <td class="col-medium">{{ r.zone_name }}</td>
                 <td class="text-left col-wide">{{ r.society_name }}</td>
+                <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.rowSpan }}</td>
+                <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.pollingHeldCount }}</td>
 
                 <!-- Rural -->
                 <td>{{ r.rural_sc }}</td>

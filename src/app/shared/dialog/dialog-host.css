@@ -1,0 +1,122 @@
+/* Same look as Form5B's final-submit dialogs */
+
+.dlg-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(17, 24, 39, 0.45);
+}
+
+.dialog {
+    width: 100%;
+    max-width: 440px;
+    padding: 28px 26px 22px;
+    background: #fff;
+    border-radius: 14px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    font-family: 'Noto Sans Tamil', 'Segoe UI', Arial, sans-serif;
+    animation: dialog-in 0.18s ease-out both;
+}
+
+@keyframes dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+.dialog-icon {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+}
+
+.dialog-icon svg {
+    width: 32px;
+    height: 32px;
+    fill: currentColor;
+}
+
+.dialog-icon.success {
+    color: #1b7a32;
+    background: #e3f4e7;
+}
+
+.dialog-icon.error {
+    color: #c62828;
+    background: #fdecec;
+}
+
+.dialog-icon.warning {
+    color: #b26a00;
+    background: #fff3d6;
+}
+
+.dialog-title {
+    margin: 0 0 8px;
+    font-size: 19px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.dialog-text {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: #4b5563;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.dialog-actions {
+    display: grid;
+    margin-top: 22px;
+}
+
+.dlg-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.dlg-btn.primary {
+    background: #1e88e5;
+    color: #fff;
+}
+
+.dlg-btn.primary:hover {
+    background: #1565c0;
+}
+
+.dlg-btn.primary.danger {
+    background: #c62828;
+}
+
+.dlg-btn.primary.danger:hover {
+    background: #a51f1f;
+}
+
+.dlg-btn:focus-visible {
+    outline: 3px solid #90caf9;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dialog {
+        animation: none;
+    }
+}

@@ -1,0 +1,33 @@
+@if (dialog.current(); as d) {
+  <div class="dlg-backdrop" (click)="dialog.close()">
+    <div class="dialog" role="alertdialog" aria-modal="true"
+      aria-labelledby="app-dialog-title" aria-describedby="app-dialog-text"
+      (click)="$event.stopPropagation()">
+
+      <div class="dialog-icon" [class]="'dialog-icon ' + d.kind" aria-hidden="true">
+        @switch (d.kind) {
+          @case ('success') {
+            <svg viewBox="0 0 24 24"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6 11-11-1.4-1.4-9.6 9.6Z"/></svg>
+          }
+          @case ('error') {
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.3 12.9-1.4 1.4L12 13.4l-2.9 2.9-1.4-1.4 2.9-2.9-2.9-2.9 1.4-1.4 2.9 2.9 2.9-2.9 1.4 1.4-2.9 2.9 2.9 2.9Z"/></svg>
+          }
+          @default {
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 15h-2v-2h2v2Zm0-4h-2V7h2v6Z"/></svg>
+          }
+        }
+      </div>
+
+      <h3 id="app-dialog-title" class="dialog-title">{{ d.title }}</h3>
+      <p id="app-dialog-text" class="dialog-text">{{ d.message }}</p>
+
+      <div class="dialog-actions">
+        <button type="button" class="dlg-btn primary" [class.danger]="d.kind === 'error'"
+          (click)="dialog.close()" autofocus>
+          சரி
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

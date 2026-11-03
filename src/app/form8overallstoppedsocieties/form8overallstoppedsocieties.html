@@ -11,13 +11,13 @@
             <thead>
 
                 <tr class="top-header">
-                    <th colspan="6">
+                    <th colspan="5">
                         தேர்தல் நிறுத்தப்பட்ட சங்கங்களின் விவரம்
                     </th>
                 </tr>
 
                 <tr class="top-sub-header">
-                    <th colspan="6">
+                    <th colspan="5">
                         துறை -- {{ department_name }}
                     </th>
                 </tr>
@@ -27,7 +27,8 @@
                     <th>மாவட்டம்</th>
                     <th>மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
                     <th>சங்கங்களின் பெயர்</th>
-                    <th>கட்டம்</th>
+                    <!-- கட்டம் column hidden -->
+                    <!-- <th>கட்டம்</th> -->
                     <th>தேர்தல் நிறுத்தப்பட்டதற்கான காரணம்</th>
                 </tr>
 
@@ -37,14 +38,13 @@
                     <th class="col-number-cell">3</th>
                     <th class="col-number-cell">4</th>
                     <th class="col-number-cell">5</th>
-                    <th class="col-number-cell">6</th>
                 </tr>
 
             </thead>
 
             <tbody>
                 <tr *ngIf="rows.length === 0">
-                    <td colspan="6" class="empty-table-message">தரவு இல்லை</td>
+                    <td colspan="5" class="empty-table-message">தரவு இல்லை</td>
                 </tr>
 
                 <tr *ngFor="let r of rows; let i = index">
@@ -52,7 +52,8 @@
                     <td *ngIf="i === 0" [attr.rowspan]="rows.length" class="text-left">{{ r.district_name }}</td>
                     <td *ngIf="i === 0" [attr.rowspan]="rows.length" class="text-left">{{ r.zone_name }}</td>
                     <td class="text-left">{{ r.society_name }}</td>
-                    <td>{{ r.stage }}</td>
+                    <!-- <td>{{ r.stage }}</td> -->
+
                     <td class="text-left">{{ r.reason }}</td>
                 </tr>
             </tbody>

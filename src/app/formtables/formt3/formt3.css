@@ -149,3 +149,64 @@
 .text-left {
     text-align: left;
 }
+/* Title row at the left edge, so it is visible without scrolling on a
+   wide table (centred, it sits off-screen on phones) */
+.top-header th {
+    text-align: left !important;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+    .page-content {
+        padding: 12px 8px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .table-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-actions button,
+    .table-actions a,
+    .action-btn,
+    .export-btn {
+        min-height: 40px;
+    }
+}
+
+/* Scroll box with its own scrollbars, so the sideways bar is always in
+   view instead of sitting under the last row of a long table */
+.table-scroll-wrapper {
+    max-height: calc(100vh - 230px);
+    overflow: auto;
+    scrollbar-width: auto;
+    scrollbar-color: #4d7c0f #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+    background: #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #4d7c0f;
+    border-radius: 7px;
+    border: 3px solid #e5f7e5;
+}
+
+/* The header is several tall wrapped rows; pinned with fixed offsets they
+   overlapped each other and covered the whole box, so let them scroll */
+.report-table thead th {
+    position: static !important;
+}
+
+@media (max-width: 768px) {
+    .table-scroll-wrapper {
+        max-height: calc(100vh - 290px);
+    }
+}

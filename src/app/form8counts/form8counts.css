@@ -1,0 +1,28 @@
+/* Base table styles come from form8names.css; only the extras here */
+
+.table-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.report-table {
+    min-width: 1400px;
+}
+
+.grand-total-row td {
+    background: #dbeafe;
+    border-top: 2px solid #1d4ed8;
+    font-weight: bold;
+}
+
+.export-btn {
+    padding: 9px 18px;
+    border: 1px solid #4d7c0f;
+    background: #e5f7e5;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.export-btn:hover {
+    background: #cfeccc;
+}

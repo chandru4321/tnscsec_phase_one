@@ -1,5 +1,8 @@
 <div class="step-container">
 
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
+
   <h2 class="title">படிவம் 1</h2>
   <h3 class="sub-title">மாவட்ட தேர்தல் அலுவலரால் தேர்தல் அறிவிப்பு வழங்கப்பட்ட விவரம்</h3>
 

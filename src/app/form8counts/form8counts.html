@@ -1,0 +1,137 @@
+<div class="page-content">
+
+    <div class="table-actions">
+        <a class="back-link" routerLink="/layout/totalforms">← Back</a>
+        <button class="export-btn" (click)="downloadPdf()">📄 Download PDF</button>
+    </div>
+
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 12</h2>
+
+    <div class="table-scroll-wrapper">
+        <table class="report-table" id="reportTable">
+
+            <thead>
+
+                <tr class="top-header">
+                    <th colspan="24">
+                        படிவம் 12 &nbsp;-&nbsp; தேர்ந்தெடுக்கப்பட்ட நிர்வாகக்குழு உறுப்பினர்கள் எண்ணிக்கை விபரம்
+                    </th>
+                </tr>
+
+                <tr class="top-sub-header">
+                    <th colspan="24">
+                        துறை -- {{ department_name }}
+                    </th>
+                </tr>
+
+                <!-- ROW 1 -->
+                <tr class="main-header">
+                    <th rowspan="2">வ. எண்</th>
+                    <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் மாவட்டம் / மண்டலம்</th>
+                    <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
+                    <th rowspan="2">தேர்தல் அறிவிப்புபடி தேர்தல் முடிவடைந்த சங்கத்தின் பெயர்</th>
+                    <th rowspan="2" colspan="4">நிர்வாகக்குழு உறுப்பினர்களின் எண்ணிக்கை</th>
+                    <th colspan="16">தேர்ந்தெடுக்கப்பட்ட நிர்வாகக்குழு உறுப்பினர்கள்</th>
+                </tr>
+
+                <!-- ROW 2 -->
+                <tr class="main-header">
+                    <th colspan="8">
+                        போட்டியின்றி தேர்ந்தெடுக்கப்பட்ட நிர்வாகக்குழு உறுப்பினர்கள் எண்ணிக்கை (Unanimously Elected)
+                    </th>
+                    <th colspan="4">
+                        வாக்குப்பதிவு (Polling) மூலம் தேர்ந்தெடுக்கப்பட்ட நிர்வாகக்குழு உறுப்பினர்கள் எண்ணிக்கை
+                    </th>
+                    <th colspan="4">
+                        தேர்ந்தெடுக்கப்பட்ட மொத்த நிர்வாகக்குழு உறுப்பினர்கள் எண்ணிக்கை
+                    </th>
+                </tr>
+
+                <!-- COLUMN NUMBER ROW -->
+                <tr class="col-number-row">
+                    <th class="col-number-cell">1</th>
+                    <th class="col-number-cell">2</th>
+                    <th class="col-number-cell">3</th>
+                    <th class="col-number-cell">4</th>
+                    <th class="col-number-cell" colspan="4">5</th>
+                    <th class="col-number-cell" colspan="8">6</th>
+                    <th class="col-number-cell" colspan="4">7</th>
+                    <th class="col-number-cell" colspan="4">8</th>
+                </tr>
+
+                <!-- ROW 3 -->
+                <tr class="sub-header">
+                    <th rowspan="2"></th>
+                    <th rowspan="2"></th>
+                    <th rowspan="2"></th>
+                    <th rowspan="2"></th>
+                    <th rowspan="2">ப.இ / பகு</th>
+                    <th rowspan="2">பெண்</th>
+                    <th rowspan="2">பொது</th>
+                    <th rowspan="2">மொத்தம்</th>
+
+                    <!-- Full Board = final candidates equal to the seats -->
+                    <th colspan="4">Full Board</th>
+                    <!-- Partial Board = fewer candidates, >= 50% of seats -->
+                    <th colspan="4">Partial Board</th>
+
+                    <th rowspan="2">ப.இ / பகு</th>
+                    <th rowspan="2">பெண்</th>
+                    <th rowspan="2">பொது</th>
+                    <th rowspan="2">மொத்தம்</th>
+
+                    <th rowspan="2">ப.இ / பகு</th>
+                    <th rowspan="2">பெண்</th>
+                    <th rowspan="2">பொது</th>
+                    <th rowspan="2">மொத்தம் (C)</th>
+                </tr>
+
+                <!-- ROW 4 -->
+                <tr class="sub-header">
+                    <th>ப.இ / பகு</th>
+                    <th>பெண்</th>
+                    <th>பொது</th>
+                    <th>மொத்தம் (A)</th>
+
+                    <th>ப.இ / பகு</th>
+                    <th>பெண்</th>
+                    <th>பொது</th>
+                    <th>மொத்தம் (B)</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                <tr *ngIf="rows.length === 0">
+                    <td colspan="24" class="empty-table-message">தரவு இல்லை</td>
+                </tr>
+
+                <tr *ngFor="let r of rows">
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.serial }}</td>
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.district_name }}</td>
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.zone_name }}</td>
+                    <td class="text-left">{{ r.society_name }}</td>
+
+                    <!-- Seats (Form4) | Full Board (A) | Partial Board (B) | Polling | Total (C) -->
+                    <ng-container *ngFor="let c of [r.seats, r.unopposed, r.aboveHalfQuorum, r.winners, r.overall]">
+                        <td *ngFor="let v of cells(c)">{{ v }}</td>
+                    </ng-container>
+                </tr>
+
+                <!-- GRAND TOTAL -->
+                <tr *ngIf="rows.length > 0" class="grand-total-row">
+                    <td colspan="4" class="text-left"><strong>மொத்தம்</strong></td>
+                    <ng-container *ngFor="let t of totals">
+                        <td><strong>{{ t.sc }}</strong></td>
+                        <td><strong>{{ t.women }}</strong></td>
+                        <td><strong>{{ t.general }}</strong></td>
+                        <td><strong>{{ t.total }}</strong></td>
+                    </ng-container>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+</div>

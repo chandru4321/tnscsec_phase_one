@@ -1,18 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MobileCardsDirective } from '../../shared/mobile-cards.directive';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { Router } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 
 @Component({
   selector: 'app-form7',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MobileCardsDirective],
   templateUrl: './form7.html',
   styleUrls: ['./form7.css']
 })
 export class Form7 implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   district_name = '';
   Zone_name = '';
@@ -80,7 +89,9 @@ export class Form7 implements OnInit {
 
       },
 
-      error: () => {
+      error: (err: any) => {
+        // Locked (next form already submitted) → show it on the page
+        this.lockedMessage = lockedMessageFrom(err);
 
         this.isEditMode = false;
 
@@ -273,7 +284,7 @@ export class Form7 implements OnInit {
         final_general_count: f4.general,
 
         form3_total: form3TotalMap.get(f4.society_id) ?? f4.total,
-        polling_date: '',
+        polling_date: this.today(),
 
         casted_votes_count: 0,
         voting_percentage: 0,
@@ -312,7 +323,7 @@ export class Form7 implements OnInit {
 
             polling_date: edit.polling_date
               ? String(edit.polling_date).slice(0, 10)
-              : '',
+              : this.today(),
 
             casted_votes_count: edit.casted_votes_count,
             voting_percentage: Number(edit.voting_percentage),
@@ -398,6 +409,21 @@ export class Form7 implements OnInit {
     }
   }
 
+  // Cast votes can never be more than the total voters
+  votesExceed(row: any): boolean {
+    const votes = Number(row?.casted_votes_count);
+    const voters = Number(row?.form3_total);
+    return row?.casted_votes_count !== '' && row?.casted_votes_count != null
+      && !isNaN(votes) && !isNaN(voters) && votes > voters;
+  }
+
+  // On leaving the field: a short popup if the votes are too high
+  checkVotes(row: any) {
+    if (this.votesExceed(row)) {
+      this.dialog.show('பதிவான வாக்குகள் மொத்த வாக்காளர்களை (' + row.form3_total + ') விட அதிகமாக இருக்கக்கூடாது');
+    }
+  }
+
   /* ================= CANCEL ================= */
   onCancel() {
     window.history.back();
@@ -405,6 +431,15 @@ export class Form7 implements OnInit {
 
   /* ================= SUBMIT ================= */
   onSubmit() {
+
+    const overLimit = this.f5Data.filter(row => this.votesExceed(row));
+    if (overLimit.length) {
+      this.dialog.show(
+        'பதிவான வாக்குகளின் எண்ணிக்கை மொத்த வாக்காளர்களின் எண்ணிக்கையை விட அதிகமாக இருக்கக்கூடாது: ' +
+        overLimit.map(r => r.society_name).join(', ')
+      );
+      return;
+    }
 
     /* ================= EDIT ================= */
 
@@ -450,7 +485,7 @@ export class Form7 implements OnInit {
 
         next: (res: any) => {
 
-          alert('Form7 Updated Successfully');
+          this.dialog.show('Form7 Updated Successfully');
           this.router.navigate(['/layout/totalforms']);
 
 
@@ -461,6 +496,7 @@ export class Form7 implements OnInit {
         error: (err) => {
 
           console.log(err);
+          this.dialog.show('✘ ' + (err?.error?.message || 'Form7 update failed'));
 
         }
 
@@ -509,18 +545,26 @@ export class Form7 implements OnInit {
 
         next: (res: any) => {
 
-          alert('Form7 Submitted Successfully');
+          this.dialog.show('Form7 Submitted Successfully');
 
 
           // this.loadEditableForm7();
           this.router.navigate(['/layout/totalforms']);
 
 
-        }
+        },
+
+        error: (err: any) => this.dialog.show('✘ ' + (err?.error?.message || 'Form7 submit failed'))
 
       });
 
     }
 
+  }
+
+  // Poll date defaults to today (local date, yyyy-mm-dd for <input type="date">)
+  private today(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 }

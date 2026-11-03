@@ -1,7 +1,10 @@
 <div class="step-container">
 
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
+
   <h2 class="title">படிவம் 2</h2>
-  <h3 class="sub-title">உறுப்பினர் பட்டியல் அளித்த/அளிக்காத சங்கங்கள் விவரம்</h3>
+  <h3 class="sub-title">சங்கம் உறுப்பினர் பட்டியல் வெளியிடுதல் மற்றும் வாக்காளர் பட்டியல் அலுவலருக்கு உறுப்பினர் பட்டியல் அளித்த/அளிக்காத சங்கங்கள் விவரம்</h3>
 
   <!-- =============== ROW 1 =============== -->
   <div class="form-grid">
@@ -75,6 +78,19 @@
     <div *ngFor="let item of f6_unselectedList" class="society-item count-item">
       <span class="count-item-name">{{ item.society_name }}</span>
       <input type="number" min="0" class="input-box count-input" [(ngModel)]="item.voter_list_prepared_count">
+    </div>
+  </div>
+
+
+  <!-- =============== EXTRA FIELD 3 : OFFICER-PREPARED SOCIETIES (READ-ONLY MIRROR) ===============
+       Same societies/counts as the field above — an officer-prepared society is, by
+       definition, a society that didn't prepare its own list, so this is not independently
+       editable; it just mirrors whatever is typed into the field above, live. -->
+  <label class="label">வாக்காளர் பட்டியல் அலுவலரால் தயாரிக்கப்பட்ட சங்கங்களின் பெயர் மற்றும் உறுப்பினர் எண்ணிக்கை</label>
+  <div class="society-list-box">
+    <div *ngFor="let item of f6_unselectedList" class="society-item count-item">
+      <span class="count-item-name">{{ item.society_name }}</span>
+      <input type="number" class="input-box count-input" [value]="item.voter_list_prepared_count" readonly>
     </div>
   </div>
 

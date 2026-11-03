@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { UserService } from '../services/user';
 
@@ -16,6 +15,7 @@ interface NameRow {
   unopposed: Names | null;
   aboveHalfQuorum: Names | null;
   winners: Names | null;
+  stopped: { stage: string; reason: string } | null;
 }
 
 @Component({
@@ -38,20 +38,21 @@ export class Form8Names implements OnInit {
     this.district_name = localStorage.getItem('district_name') || '';
     this.zone_name = localStorage.getItem('zone_name') || '';
 
-    forkJoin({
-      f6: this.userService.getForm6Table(),
-      f8: this.userService.getForm8Table()
-    }).subscribe(({ f6, f8 }) => {
-      this.department_name = localStorage.getItem('department_name') || '';
-      this.rows = this.buildRows(f6, f8);
+    // Same rows as the admin page and the PDF (backend /form8/name/list)
+    this.userService.getForm11List().subscribe({
+      next: (res: any) => {
+        this.department_name = localStorage.getItem('department_name') || '';
+        this.rows = this.buildRows(res?.success ? res.data?.rows || [] : []);
+      },
+      error: err => { console.error(err); this.rows = []; }
     });
   }
 
   downloadPdf(): void {
 
-    const departmentId = 2;
-
-    this.userService.getForm8NamesPdf(departmentId).subscribe(
+    // No hard-coded department: the backend uses the logged-in user's own
+    // department/district, the same data this table shows.
+    this.userService.getForm8NamesPdf().subscribe(
       (res: Blob) => {
 
         saveAs(
@@ -66,50 +67,19 @@ export class Form8Names implements OnInit {
     );
   }
 
-  private buildRows(f6: any, f8: any): NameRow[] {
+  private buildRows(apiRows: any[]): NameRow[] {
+    const names = (n: any): Names | null => n ? {
+      sc: (n.sc_st || []).join(', ') || '-',
+      women: (n.women || []).join(', ') || '-',
+      general: (n.general || []).join(', ') || '-'
+    } : null;
 
-    const f6Societies: any[] = f6?.data?.data?.[0]?.societies || [];
-    const names = (arr: any): string => (arr || []).join(', ') || '-';
-
-    const byName = new Map<string, NameRow>();
-    const rowFor = (name: string): NameRow => {
-      if (!byName.has(name)) {
-        byName.set(name, { society_name: name, unopposed: null, aboveHalfQuorum: null, winners: null });
-      }
-      return byName.get(name)!;
-    };
-
-    f6Societies.forEach(s => {
-      const name = s.society_name || '-';
-      const value: Names = {
-        sc: names(s.final_scst_names),
-        women: names(s.final_women_names),
-        general: names(s.final_general_names)
-      };
-
-      if (s.election_status === 'UNOPPOSED') {
-        rowFor(name).unopposed = value;
-      } else if (s.election_status === 'UNQUALIFIED'
-        && (s.rural_total || 0) > 0
-        && (s.final_total || 0) >= (s.rural_total || 0) * 0.5) {
-        rowFor(name).aboveHalfQuorum = value;
-      }
-    });
-
-    (f8?.data || []).forEach((form: any) => {
-      (form.societies || []).forEach((soc: any) => {
-        const byCategory = (type: string): string => {
-          const cat = (soc.categories || []).find((c: any) => c.category === type);
-          return (cat?.winners || []).map((w: any) => w.member_name).join(', ') || '-';
-        };
-        rowFor(soc.society_name || '-').winners = {
-          sc: byCategory('SC_ST'),
-          women: byCategory('WOMEN'),
-          general: byCategory('GENERAL')
-        };
-      });
-    });
-
-    return Array.from(byName.values());
+    return apiRows.map(r => ({
+      society_name: r.society_name || '-',
+      unopposed: names(r.unopposed),
+      aboveHalfQuorum: names(r.aboveHalfQuorum),
+      winners: names(r.winners),
+      stopped: r.stopped ?? null
+    }));
   }
 }

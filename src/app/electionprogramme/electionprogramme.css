@@ -203,3 +203,50 @@
     font-weight: 700;
     background: #eef7ee;
 }
+
+/* A <fieldset> stretches to its widest content by default (min-width:
+   min-content), which made the 900px tables push the whole page sideways
+   on phones. With min-width 0 the tables scroll inside .ep-table-scroll. */
+.ep-fieldset {
+    min-width: 0;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+    .ep-page {
+        padding: 12px 8px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .ep-topbar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ep-topbar h2 {
+        font-size: 18px;
+    }
+
+    .ep-section {
+        padding: 14px 10px;
+    }
+
+    .ep-phase {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .ep-phase-count {
+        flex-wrap: wrap;
+    }
+
+    .ep-phase-count input {
+        width: 100%;
+        max-width: 220px;
+    }
+
+    .ep-edit-btn,
+    .ep-submit-btn {
+        min-height: 40px;
+    }
+}

@@ -1,0 +1,100 @@
+<!-- ================= (a) ================= -->
+<table class="report-table part-a" *ngIf="part === 'a'">
+    <thead>
+        <tr class="top-header">
+            <th colspan="11">படிவம் {{ formNo }} (a) &nbsp;-&nbsp; {{ role }} தேர்தல் விவரம்</th>
+        </tr>
+        <tr class="top-sub-header">
+            <th colspan="11">துறை -- {{ departmentName }}</th>
+        </tr>
+        <tr class="main-header">
+            <th class="col-small">வ. எண்</th>
+            <th class="col-medium">மாவட்ட தேர்தல் அலுவலர் மாவட்டம் / மண்டலம்</th>
+            <th class="col-medium">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
+            <th class="col-wide">{{ role }} தேர்தல் நடை பெற வேண்டிய சங்கத்தின் பெயர்</th>
+            <th class="col-wide">{{ role }} தேர்தலுக்கு தாக்கல் செய்யப்பட்ட வேட்பாளர் பெயர்</th>
+            <th class="col-wide">பரிசீலனையில் நிராகரிக்கப்பட்ட வேட்பாளர்</th>
+            <th class="col-wide">{{ role }} தேர்தலுக்கு தகுதிபெற்ற வேட்பாளர்கள்</th>
+            <th class="col-wide">தகுதி பெற்ற வேட்பாளர்களிலிருந்து வேட்பு மனுவை திரும்ப பெற்ற வேட்பாளர்கள்</th>
+            <th class="col-wide">{{ role }} தேர்தலுக்கான இறுதி வேட்பாளர்கள் பட்டியல்</th>
+            <th class="col-wide">{{ role }} தேர்தலுக்கான இறுதி வேட்பாளர்கள் பட்டியல்படி போட்டியின்றி தேர்ந்தெடுக்கப்பட்ட {{ role }}</th>
+            <th class="col-wide">{{ role }} தேர்தலுக்கான இறுதி வேட்பாளர் பட்டியல்படி {{ role }} தேர்தலில் போட்டியிடும் நிர்வாகக்குழு உறுப்பினர் பெயர் (9-10)</th>
+        </tr>
+        <tr class="col-number-row">
+            <th *ngFor="let n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]">({{ n }})</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngIf="aRows.length === 0">
+            <td colspan="11" class="empty-table-message">தயவுசெய்து முதலில் படிவம் {{ formNo }}-ஐ பூர்த்தி செய்யவும்.</td>
+        </tr>
+        <tr *ngFor="let r of aRows">
+            <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.serial }}</td>
+            <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.district_name }}</td>
+            <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.zone_name }}</td>
+            <td class="text-left">{{ r.society_name }}</td>
+            <td class="text-left">{{ r.filed }}</td>
+            <td class="text-left">{{ r.rejected }}</td>
+            <td class="text-left">{{ r.eligible }}</td>
+            <td class="text-left">{{ r.withdrawn }}</td>
+            <td class="text-left">{{ r.final_list }}</td>
+            <td class="text-left">{{ r.unopposed_president }}</td>
+            <td class="text-left">{{ r.contesting }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ================= (b) ================= -->
+<table class="report-table part-b" *ngIf="part === 'b'">
+    <thead>
+        <tr class="top-header">
+            <th colspan="12">படிவம் {{ formNo }} (b) &nbsp;-&nbsp; {{ role }} தேர்தல் விவரம்</th>
+        </tr>
+        <tr class="top-sub-header">
+            <th colspan="12">துறை -- {{ departmentName }}</th>
+        </tr>
+        <tr class="main-header">
+            <th rowspan="2" class="col-small">வ. எண்</th>
+            <th rowspan="2" class="col-medium">மாவட்ட தேர்தல் அலுவலர் மாவட்டம் / மண்டலம்</th>
+            <th rowspan="2" class="col-medium">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
+            <th rowspan="2" class="col-wide">{{ role }} தேர்தலுக்கான இறுதி வேட்பாளர்கள் பட்டியல்படி {{ role }} தேர்தல் நடைபெற்ற சங்கத்தின் பெயர்</th>
+            <th colspan="3">{{ role }} தேர்தலுக்கான இறுதி வேட்பாளர்கள் பட்டியல்படி {{ role }} தேர்தலில் போட்டியிடும் நிர்வாகக்குழு உறுப்பினர்கள்</th>
+            <th colspan="3">{{ role }} தேர்தலில் போட்டியிட்ட நிர்வாகக்குழு உறுப்பினர்கள் பெற்ற வாக்குகள் விவரம்</th>
+            <th rowspan="2" class="col-wide">வாக்குப்பதிவு மூலம் தேர்ந்தெடுக்கப்பட்ட {{ role }} விவரம் (அதிக வாக்குகள்)</th>
+            <th rowspan="2" class="col-wide">{{ role }} தேர்தலின் போது தேர்தல் நிறுத்தப்பட்ட சங்கத்தின் பெயர் காரணம்</th>
+        </tr>
+        <tr class="main-header sub-row">
+            <th class="col-cat" *ngFor="let c of categories">{{ c.label }}</th>
+            <th class="col-cat" *ngFor="let c of categories">{{ c.label }}</th>
+        </tr>
+        <tr class="col-number-row">
+            <th></th><th></th><th></th>
+            <th>(12)</th>
+            <th colspan="3">(13)</th>
+            <th colspan="3">(14)</th>
+            <th>(15)</th>
+            <th>(16)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngIf="bRows.length === 0">
+            <td colspan="12" class="empty-table-message">வாக்குப்பதிவு / நிறுத்தப்பட்ட சங்கங்கள் இல்லை.</td>
+        </tr>
+        <tr *ngFor="let r of bRows">
+            <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.serial }}</td>
+            <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.district_name }}</td>
+            <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.zone_name }}</td>
+            <td class="text-left">{{ r.society_name }}</td>
+            <td class="text-left" *ngFor="let c of categories">
+                <div *ngFor="let n of r.contesting[c.key]">{{ n }}</div>
+                <span *ngIf="!r.contesting[c.key].length">-</span>
+            </td>
+            <td class="text-left" *ngFor="let c of categories">
+                <div *ngFor="let v of r.votes[c.key]">{{ v }}</div>
+                <span *ngIf="!r.votes[c.key].length">-</span>
+            </td>
+            <td class="text-left">{{ r.president }}</td>
+            <td class="text-left">{{ r.stopped }}</td>
+        </tr>
+    </tbody>
+</table>

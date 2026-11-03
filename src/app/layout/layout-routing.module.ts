@@ -5,6 +5,9 @@ import { ElectionProgramme } from '../electionprogramme/electionprogramme';
 import { ElectionSchedule } from '../electionschedule/electionschedule';
 import { Form8Names } from '../form8names/form8names';
 import { Form8OverallStoppedSocieties } from '../form8overallstoppedsocieties/form8overallstoppedsocieties';
+import { Form8Counts } from '../form8counts/form8counts';
+import { Form8Incomplete } from '../form8incomplete/form8incomplete';
+import { Form8Office } from '../form8office/form8office';
 
 const routes: Routes = [
   {
@@ -31,6 +34,18 @@ const routes: Routes = [
       {
         path: 'form8overallstoppedsocieties',
         component: Form8OverallStoppedSocieties
+      },
+      {
+        path: 'form8counts',
+        component: Form8Counts
+      },
+      {
+        path: 'form8incomplete',
+        component: Form8Incomplete
+      },
+      {
+        path: 'form8office',
+        component: Form8Office
       },
       {
         path: 'electionschedule',

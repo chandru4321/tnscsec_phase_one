@@ -169,3 +169,43 @@
     text-align: center;
     padding: 4px 8px;
 }
+
+/* Title row at the left edge, so it is visible without scrolling on a
+   wide table (centred, it sits off-screen on phones) */
+.top-header th {
+    text-align: left !important;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+    .page-content {
+        padding: 12px 8px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .table-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-actions button,
+    .table-actions a,
+    .action-btn,
+    .export-btn {
+        min-height: 40px;
+    }
+}
+
+/* Phones: the header wraps and gets taller than the fixed 90px offset
+   used above, so let the page content flow normally under it. */
+@media (max-width: 768px) {
+    .page-content {
+        position: static !important;
+        top: auto;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        height: auto;
+        overflow: visible;
+    }
+}

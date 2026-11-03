@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MobileCardsDirective } from '../../shared/mobile-cards.directive';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 type CategoryType = 'sc_st' | 'women' | 'general';
 
@@ -15,11 +18,17 @@ interface Member {
 @Component({
   selector: 'app-form5',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MobileCardsDirective],
   templateUrl: './form5.html',
   styleUrls: ['./form5.css']
 })
 export class Form5Component implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   form5List: any[] = [];
 
@@ -56,18 +65,20 @@ export class Form5Component implements OnInit {
 
         const d = res.data;
 
-        if (d.editable) {
-
+        if (d?.editable) {
           this.isEditMode = true;
-
-          this.editableMembers = d.members;
-
-          // Load society list normally
-          this.loadForm5();
+          this.editableMembers = d.members || [];
+        } else {
+          this.editableMembers = [];
         }
+
+        // Load society list normally
+        this.loadForm5();
       },
 
-      error: () => {
+      error: (err: any) => {
+        // Locked (next form already submitted) → show it on the page
+        this.lockedMessage = lockedMessageFrom(err);
 
         this.isEditMode = false;
 
@@ -100,7 +111,10 @@ export class Form5Component implements OnInit {
             filed_soc_id: item.filed_soc_id,
 
             declared: item.declared,
-            submitted: false
+
+            // Already has saved members → the button edits them
+            hasMembers: this.editableMembers.some(
+              (m: any) => m.form4_filed_soc_id === item.filed_soc_id)
           });
         }
       });
@@ -222,7 +236,7 @@ export class Form5Component implements OnInit {
     );
 
     if (invalidMember) {
-      alert('சரியான பெயர் மற்றும் 12 இலக்க ஆதார் எண் உள்ளிடவும்');
+      this.dialog.show('சரியான பெயர் மற்றும் 12 இலக்க ஆதார் எண் உள்ளிடவும்');
       return;
     }
 
@@ -234,6 +248,8 @@ export class Form5Component implements OnInit {
     if (this.isEditMode) {
 
       const payload = {
+        // the edit API checks the members belong to THIS society
+        form4_filed_soc_id: this.selectedSociety.filed_soc_id,
         updates: this.members.map((m: any) => ({
           form5_id: m.id,
           member_name: m.member_name,
@@ -241,10 +257,19 @@ export class Form5Component implements OnInit {
         }))
       };
 
-      this.userService.editForm5(payload).subscribe((res: any) => {
-        if (res.success) {
-          alert('✔ Form5 Updated Successfully');
-          this.closeModal();
+      this.userService.editForm5(payload).subscribe({
+        next: (res: any) => {
+          if (res?.success) {
+            this.dialog.show('✔ Form5 Updated Successfully');
+            this.closeModal();
+            // Re-fetch so reopening shows the updated names / Aadhaar
+            this.loadEditableForm5();
+          } else {
+            this.dialog.show('✘ ' + (res?.message || 'Form5 Update Failed'));
+          }
+        },
+        error: (err: any) => {
+          this.dialog.show('✘ ' + (err?.error?.message || err?.message || 'Form5 Update Failed'));
         }
       });
 
@@ -254,14 +279,19 @@ export class Form5Component implements OnInit {
         members: this.members
       };
 
-      this.userService.submitForm5(payload).subscribe((res: any) => {
-        if (res.success) {
-
-          // Change button text for this row
-          this.selectedSociety.submitted = true;
-
-          alert('✔ Form5 Submitted Successfully');
-          this.closeModal();
+      this.userService.submitForm5(payload).subscribe({
+        next: (res: any) => {
+          if (res?.success) {
+            this.dialog.show('✔ Form5 Submitted Successfully');
+            this.closeModal();
+            // Re-fetch so this society now opens in edit mode
+            this.loadEditableForm5();
+          } else {
+            this.dialog.show('✘ ' + (res?.message || 'Form5 Submission Failed'));
+          }
+        },
+        error: (err: any) => {
+          this.dialog.show('✘ ' + (err?.error?.message || err?.message || 'Form5 Submission Failed'));
         }
       });
     }
@@ -271,7 +301,7 @@ export class Form5Component implements OnInit {
   }
 
   exportExcel() {
-    alert('Excel export logic here');
+    this.dialog.show('Excel export logic here');
   }
 }
 

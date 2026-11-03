@@ -37,11 +37,14 @@ interface TableRow {
   districtZoneRowSpan?: number;
 }
 
-// One row per district + zone, with every society's candidates summed —
-// no per-society breakdown here (that's what the Full List view is for).
+// One row per district, with every society's candidates summed across
+// all its circles — no per-society breakdown here (that's what the Full
+// List view is for). zone_count is how many distinct circles were rolled
+// into this district's totals.
 interface AbstractRow {
   district_name: string;
   zone_name: string;
+  zone_count: number;
   society_count: number;
   sc_total: number;
   women_total: number;
@@ -65,6 +68,7 @@ export class Table5 implements OnInit {
   grandTotal: AbstractRow = {
     district_name: '',
     zone_name: '',
+    zone_count: 0,
     society_count: 0,
     sc_total: 0,
     women_total: 0,
@@ -112,7 +116,7 @@ export class Table5 implements OnInit {
 
           this.tableRows = [];
           this.abstractRows = [];
-          this.grandTotal = { district_name: '', zone_name: '', society_count: 0, sc_total: 0, women_total: 0, general_total: 0, grand_total: 0 };
+          this.grandTotal = { district_name: '', zone_name: '', zone_count: 0, society_count: 0, sc_total: 0, women_total: 0, general_total: 0, grand_total: 0 };
 
         }
 
@@ -177,7 +181,7 @@ export class Table5 implements OnInit {
         else if (m.category_type === 'women') group.women.push(entry);
         else if (m.category_type === 'general') group.general.push(entry);
 
-        // District/zone-wise totals only — no per-society breakdown here.
+        // District+zone-wise totals only — no per-society breakdown here.
         const abstractKey = `${districtName}||${zoneName}`;
         if (!abstractGroups.has(abstractKey)) {
           abstractGroups.set(abstractKey, {
@@ -251,6 +255,7 @@ export class Table5 implements OnInit {
     this.abstractRows = Array.from(abstractGroups.values()).map(group => ({
       district_name: group.district_name,
       zone_name: group.zone_name,
+      zone_count: 1,
       society_count: group.societyNames.size,
       sc_total: group.sc,
       women_total: group.women,
@@ -259,13 +264,14 @@ export class Table5 implements OnInit {
     }));
 
     this.grandTotal = this.abstractRows.reduce((totals, a) => {
+      totals.zone_count += a.zone_count;
       totals.society_count += a.society_count;
       totals.sc_total += a.sc_total;
       totals.women_total += a.women_total;
       totals.general_total += a.general_total;
       totals.grand_total += a.grand_total;
       return totals;
-    }, { district_name: '', zone_name: '', society_count: 0, sc_total: 0, women_total: 0, general_total: 0, grand_total: 0 });
+    }, { district_name: '', zone_name: '', zone_count: 0, society_count: 0, sc_total: 0, women_total: 0, general_total: 0, grand_total: 0 });
 
   }
 
@@ -296,7 +302,7 @@ export class Table5 implements OnInit {
 
           this.tableRows = [];
           this.abstractRows = [];
-          this.grandTotal = { district_name: '', zone_name: '', society_count: 0, sc_total: 0, women_total: 0, general_total: 0, grand_total: 0 };
+          this.grandTotal = { district_name: '', zone_name: '', zone_count: 0, society_count: 0, sc_total: 0, women_total: 0, general_total: 0, grand_total: 0 };
 
         }
 

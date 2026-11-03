@@ -1,0 +1,119 @@
+<div class="page-content">
+
+    <app-report-actions [page]="this"></app-report-actions>
+
+    <!-- ABSTRACT (district / zone-wise) -->
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 16</h2>
+    <div class="table-source">அட்டவணை 16 (பதிவு படிவம் 16-லிருந்து)</div>
+
+    <app-abstract-table *ngIf="viewMode === 'abstract'"
+        formNumber="படிவம் 16" [title]="title" [department]="selectedDepartment || department_name || 'அனைத்தும்'"
+        [groups]="abstract.groups" [rows]="abstract.zones">
+    </app-abstract-table>
+
+    <!-- Name + Aadhaar cell pair; several people are stacked one per line -->
+    <ng-template #people let-list>
+        <td class="text-left person-cell">
+            <ng-container *ngIf="list.length; else dash">
+                <div *ngFor="let p of list">{{ p.member_name }}</div>
+            </ng-container>
+        </td>
+        <td class="person-cell">
+            <ng-container *ngIf="list.length; else dash">
+                <div *ngFor="let p of list">{{ aadhar(p.aadhar_no) }}</div>
+            </ng-container>
+        </td>
+    </ng-template>
+    <ng-template #dash>-</ng-template>
+
+    <div class="table-scroll-wrapper" *ngIf="viewMode === 'full'">
+        <table class="report-table office-table">
+
+            <thead>
+
+                <tr class="top-header">
+                    <th colspan="25">படிவம் 16 &nbsp;-&nbsp; {{ title }}</th>
+                </tr>
+
+                <tr class="top-sub-header">
+                    <th colspan="25">
+                        நாள் : {{ today | date:'dd-MM-yyyy' }} &nbsp;&nbsp;|&nbsp;&nbsp; துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
+                    </th>
+                </tr>
+
+                <tr class="main-header">
+                    <th rowspan="3">வ. எண்</th>
+                    <th rowspan="3">மாவட்டம் / சரகம்</th>
+                    <th rowspan="3">சங்கங்களின் பெயர்கள்</th>
+                    <th colspan="4" rowspan="2">தேர்ந்தெடுக்கப்பட்ட மொத்த நிர்வாகக்குழு உறுப்பினர்களின் எண்ணிக்கை</th>
+                    <th colspan="6">தேர்ந்தெடுக்கப்பட்ட நிர்வாகக்குழு உறுப்பினர்கள் (தலைவர், துணைத்தலைவர் தவிர)</th>
+                    <th colspan="6">தலைவர்</th>
+                    <th colspan="6">துணைத் தலைவர்</th>
+                </tr>
+
+                <tr class="sub-header">
+                    <ng-container *ngFor="let g of [1, 2, 3]">
+                        <th colspan="2" *ngFor="let l of categoryLabels">{{ l }}</th>
+                    </ng-container>
+                </tr>
+
+                <tr class="sub-header">
+                    <th>ப.இ./ப.கு</th>
+                    <th>மகளிர்</th>
+                    <th>பொது</th>
+                    <th>மொத்தம்</th>
+                    <ng-container *ngFor="let n of [1, 2, 3, 4, 5, 6, 7, 8, 9]">
+                        <th>பெயர்</th>
+                        <th>ஆதார் எண்</th>
+                    </ng-container>
+                </tr>
+
+                <tr class="col-number-row">
+                    <th class="col-number-cell">(1)</th>
+                    <th class="col-number-cell">(2)</th>
+                    <th class="col-number-cell">(3)</th>
+                    <th class="col-number-cell" colspan="4">(4)</th>
+                    <th class="col-number-cell" colspan="6">(5)</th>
+                    <th class="col-number-cell" colspan="6">(6)</th>
+                    <th class="col-number-cell" colspan="6">(7)</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                <tr *ngIf="tableRows.length === 0">
+                    <td colspan="25" class="empty-table-message">தரவு இல்லை</td>
+                </tr>
+
+                <tr *ngFor="let r of tableRows; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td class="text-left">{{ r.district_name }} / {{ r.zone_name }}</td>
+                    <td class="text-left">{{ r.society_name }}</td>
+
+                    <td>{{ r.counts.sc_st }}</td>
+                    <td>{{ r.counts.women }}</td>
+                    <td>{{ r.counts.general }}</td>
+                    <td>{{ r.counts.total }}</td>
+
+                    <!-- (5) members excluding president / vice-president -->
+                    <ng-container *ngFor="let c of categories">
+                        <ng-container *ngTemplateOutlet="people; context: { $implicit: r.members[c] }"></ng-container>
+                    </ng-container>
+
+                    <!-- (6) president -->
+                    <ng-container *ngFor="let c of categories">
+                        <ng-container *ngTemplateOutlet="people; context: { $implicit: office(r.president, c) }"></ng-container>
+                    </ng-container>
+
+                    <!-- (7) vice-president -->
+                    <ng-container *ngFor="let c of categories">
+                        <ng-container *ngTemplateOutlet="people; context: { $implicit: office(r.vicePresident, c) }"></ng-container>
+                    </ng-container>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+</div>

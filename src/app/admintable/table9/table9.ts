@@ -1,22 +1,37 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { UserService } from '../../services/user';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { Form14Part, Form14Table } from '../../shared/form14-table/form14-table';
+import { AbstractTable } from '../shared/abstract-table/abstract-table';
+import { AbstractResult, abstract14 } from '../shared/abstract12to16';
 
+// Admin படிவம் 14 (a) at /table9 and 14 (b) at /table9b — the route's
+// data.part picks which half; Department / District filters as before.
 @Component({
   selector: 'app-formt9',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, Form14Table, AbstractTable],
   templateUrl: './table9.html',
   styleUrls: ['./table9.css']
 })
 export class Table9 implements OnInit {
 
+  part: Form14Part = 'a';
+
+  // Full list ⇄ district / zone-wise abstract (same rules as the abstract PDF)
+  viewMode: 'full' | 'abstract' = 'full';
+  abstract: AbstractResult = { groups: [], zones: [] };
+  readonly formNumber = 'படிவம் 14';
+  readonly title = 'தலைவர் தேர்தல் விவரம்';
+
+  toggleViewMode(): void {
+    this.viewMode = this.viewMode === 'full' ? 'abstract' : 'full';
+  }
   department_name = '';
-  tableRows: any[] = [];
+  forms: any[] = [];
 
   selectedDepartment = '';
   selectedDistrict = '';
@@ -24,201 +39,66 @@ export class Table9 implements OnInit {
   departmentList: { id: number; name: string }[] = [];
   districtList: { id: number; name: string }[] = [];
 
-  constructor(private userService: UserService) { }
+  constructor(private userService: UserService, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
-
+    this.part = this.route.snapshot.data?.['part'] === 'b' ? 'b' : 'a';
     this.loadDepartments();
     this.loadDistricts();
-    this.loadForm9();
-
+    this.applyFilter();
   }
 
   loadDepartments(): void {
-
     this.userService.getdepartment().subscribe((res: any) => {
-
       if (res?.success) {
-
         this.departmentList = res.data
           .filter((d: any) => d.is_active === 1)
-          .map((d: any) => ({
-
-            id: d.id,
-            name: d.name.trim()
-
-          }));
-
+          .map((d: any) => ({ id: d.id, name: d.name.trim() }));
       }
-
     });
-
   }
-
-
 
   loadDistricts(): void {
-
     this.userService.getdistrict().subscribe((res: any) => {
-
       if (res?.success) {
-
         this.districtList = res.data
           .filter((d: any) => d.is_active === 1)
-          .map((d: any) => ({
-
-            id: d.id,
-            name: d.name.trim()
-
-          }));
-
+          .map((d: any) => ({ id: d.id, name: d.name.trim() }));
       }
-
     });
-
-  }
-  loadForm9(): void {
-
-    this.userService.loadForm9Filtered().subscribe({
-
-      next: (res: any) => {
-
-        if (!res.success || !res.data?.length) {
-
-          this.tableRows = [];
-          return;
-
-        }
-
-        this.prepareRows(res.data);
-
-      },
-
-      error: err => console.error(err)
-
-    });
-
-  }
-  prepareRows(data: any[]): void {
-
-    const rows: any[] = [];
-
-    data.forEach((form: any) => {
-
-      const department =
-        form.department_name ??
-        form.department?.name ??
-        '';
-
-      const district =
-        form.district_name ??
-        form.district?.name ??
-        '';
-
-      const zone =
-        form.zone_name ??
-        form.zone?.name ??
-        '';
-
-      this.department_name = department;
-
-      form.societies?.forEach((soc: any) => {
-
-        rows.push({
-
-          district_name: district,
-
-          zone_name: zone,
-
-          society_name: soc.society_name || '-',
-
-          final_sc: soc.final_counts?.sc_st || 0,
-          final_women: soc.final_counts?.women || 0,
-          final_general: soc.final_counts?.general || 0,
-          final_total: soc.final_counts?.total || 0,
-
-          rejected_sc: soc.rejected_counts?.sc_st || 0,
-          rejected_women: soc.rejected_counts?.women || 0,
-          rejected_general: soc.rejected_counts?.general || 0,
-          rejected_total: soc.rejected_counts?.total || 0,
-
-          withdrawn_sc: soc.withdrawn_counts?.sc_st || 0,
-          withdrawn_women: soc.withdrawn_counts?.women || 0,
-          withdrawn_general: soc.withdrawn_counts?.general || 0,
-          withdrawn_total: soc.withdrawn_counts?.total || 0,
-
-          president_name: soc.president_winner?.member_name || '-',
-
-          election_type: soc.election_type || '-'
-
-        });
-
-      });
-
-    });
-
-    this.tableRows = rows;
-
   }
 
+  private get deptId(): number | undefined {
+    return this.departmentList.find(d => d.name === this.selectedDepartment)?.id;
+  }
 
+  private get distId(): number | undefined {
+    return this.districtList.find(d => d.name === this.selectedDistrict)?.id;
+  }
 
   applyFilter(): void {
-
-    const deptId = this.departmentList.find(
-      d => d.name === this.selectedDepartment
-    )?.id;
-
-    const distId = this.districtList.find(
-      d => d.name === this.selectedDistrict
-    )?.id;
-
-    this.userService.loadForm9Filtered(deptId, distId)
-      .subscribe({
-
-        next: (res: any) => {
-
-          if (!res.success || !res.data?.length) {
-
-            this.tableRows = [];
-            return;
-
-          }
-
-          this.prepareRows(res.data);
-
-        },
-
-        error: err => console.error(err)
-
-      });
-
+    this.userService.loadForm9Filtered(this.deptId, this.distId).subscribe({
+      next: (res: any) => {
+        this.forms = res?.success ? (res.data || []) : [];
+        this.department_name = this.forms[0]?.department?.name || '';
+        this.abstract = abstract14(this.forms, this.part, 'president');
+      },
+      error: err => console.error(err)
+    });
   }
+
   downloadPdf(): void {
-
-    const deptId = this.departmentList.find(
-      d => d.name === this.selectedDepartment
-    )?.id;
-
-    const distId = this.districtList.find(
-      d => d.name === this.selectedDistrict
-    )?.id;
-
-    this.userService.getForm9Pdf(deptId, distId)
-      .subscribe({
-
-        next: (res: Blob) => {
-
-          saveAs(
-            new Blob([res], { type: 'application/pdf' }),
-            'Form9_Report.pdf'
-          );
-
-        },
-
+    if (this.viewMode === 'abstract') {
+      this.userService.getPresidentAbstractPdf(this.deptId, this.distId, this.part).subscribe({
+        next: (res: any) => saveAs(new Blob([res], { type: 'application/pdf' }), `Form14${this.part}_Abstract_Report.pdf`),
         error: err => console.error(err)
-
       });
+      return;
+    }
 
+    this.userService.getForm9Pdf(this.deptId, this.distId, this.part).subscribe({
+      next: (res: Blob) => saveAs(new Blob([res], { type: 'application/pdf' }), `Form14${this.part}_Report.pdf`),
+      error: err => console.error(err)
+    });
   }
 }

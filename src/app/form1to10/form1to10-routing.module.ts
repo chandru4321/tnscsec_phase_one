@@ -38,10 +38,16 @@ const routes: Routes = [
     path: 'form8', component: Form8
   },
   {
-    path: 'form9', component: Form9
+    path: 'form9', component: Form9, data: { part: 'a' }    // படிவம் 14 (a)
   },
   {
-    path: 'form10', component: Form10
+    path: 'form9b', component: Form9, data: { part: 'b' }   // படிவம் 14 (b)
+  },
+  {
+    path: 'form10', component: Form10, data: { part: 'a' }    // படிவம் 15 (a)
+  },
+  {
+    path: 'form10b', component: Form10, data: { part: 'b' }   // படிவம் 15 (b)
   }
 ];
 

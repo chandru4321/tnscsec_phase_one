@@ -1,5 +1,8 @@
 <div class="page-bg">
 
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
+
     <h2 class="form-title">படிவம் 3</h2>
     <div class="form-subtitle">
         இறுதி வாக்காளர் பட்டியல் வாக்காளர் பட்டியல் அலுவலரால் வெளியிடப்பட்ட விபரம்
@@ -103,16 +106,54 @@
         எண்ணிக்கை
     </div>
     <div class="large-box">
-        <div class="f7-row" *ngFor="let soc of allSocietiesList; let i = index">
-            <div class="f7-name">{{ i + 1 }}. {{ soc.society_name }}</div>
+        <div class="f7-row" *ngFor="let soc of allSocietiesList; let i = index" [class.f7-stopped]="isStopped(soc.society_id)">
+            <div class="f7-name">
+                {{ i + 1 }}. {{ soc.society_name }}
+                <span class="stop-note" *ngIf="isStopped(soc.society_id)">
+                    தேர்தல் நிறுத்தப்பட்டது — {{ stopLabel(soc.society_id) }}
+                </span>
+            </div>
             <div class="f7-input-group">
                 <span class="f7-label">மொத்த வாக்காளர்கள்</span>
                 <input class="f7-input" [value]="finalVoterCount(soc)" readonly />
             </div>
+            <button type="button" class="btn-stop" [class.is-stopped]="isStopped(soc.society_id)" (click)="openStop(soc)">
+                {{ isStopped(soc.society_id) ? 'நிறுத்தம் திருத்த' : 'தேர்தலை நிறுத்த' }}
+            </button>
         </div>
     </div>
 
 
+
+    <!-- STOP ELECTION POPUP (same reasons as Form5B / Form7) -->
+    <div class="modal-backdrop" *ngIf="stopSociety" (click)="closeStop()">
+        <div class="stop-modal" role="dialog" aria-modal="true" aria-labelledby="stop-title" (click)="$event.stopPropagation()">
+            <div class="stop-modal-header">
+                <h3 id="stop-title">தேர்தலை நிறுத்த</h3>
+                <button type="button" class="close-btn" (click)="closeStop()" aria-label="Close">×</button>
+            </div>
+            <p class="stop-society">{{ stopSociety.society_name }}</p>
+
+            <select class="reason-dropdown" [(ngModel)]="stopReason" name="form3StopReason">
+                <option value="" disabled selected hidden>காரணம் தேர்வு செய்யவும்</option>
+                <option *ngFor="let r of reasonOptions" [value]="r.value">{{ r.label }}</option>
+            </select>
+
+            <textarea *ngIf="stopReason === 'other'" class="other-reason-box" [(ngModel)]="stopOtherReasonText"
+                name="form3StopOther" maxlength="555"
+                placeholder="காரணத்தை உள்ளிடவும் (அதிகபட்சம் 555 எழுத்துகள்)"></textarea>
+
+            <p class="stop-hint">படிவம் 3 சமர்ப்பிக்கும்போது சேமிக்கப்படும். நிறுத்தப்பட்ட சங்கம் படிவம் 4-ல் வராது.</p>
+
+            <div class="stop-modal-footer">
+                <button type="button" class="btn-cancel" *ngIf="isStopped(stopSociety.society_id)" (click)="cancelStop()">
+                    நிறுத்தத்தை நீக்க
+                </button>
+                <button type="button" class="btn-cancel" (click)="closeStop()">ரத்து</button>
+                <button type="button" class="btn-stop-confirm" (click)="saveStop()">நிறுத்த</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ACTIONS -->
     <div class="form-actions-right">

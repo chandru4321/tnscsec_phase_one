@@ -5,6 +5,9 @@
         </button>
     </div>
 
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 7</h2>
+
     <div class="table-scroll-wrapper">
         <table class="report-table" id="reportTable">
 
@@ -12,7 +15,7 @@
 
                 <!-- TITLE -->
                 <tr class="top-header">
-                    <th colspan="39">
+                    <th colspan="44">
                         வேட்புமனு திரும்பப் பெறுதல் மற்றும் போட்டியிடும் வேட்பாளர் இறுதிப் பட்டியல் பற்றிய எண்ணிக்கை
                         விவரங்கள்
                     </th>
@@ -20,7 +23,7 @@
 
                 <!-- DEPARTMENT -->
                 <tr class="top-sub-header">
-                    <th colspan="39">
+                    <th colspan="44">
                         துறை -- {{ department_name }}
                     </th>
                 </tr>
@@ -32,16 +35,20 @@
                     <th rowspan="2" class="col-medium">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
 
                     <th colspan="4">
-                        போட்டியிடும் வேட்பாளர் இறுதி பட்டியலின்படி தேர்தலில் போட்டியிடும் சங்கங்கள் மற்றும் வேட்பாளர்கள்
-                        விபரம்
+                        மொத்த நிர்வாகக்குழு உறுப்பினர்களின் எண்ணிக்கை
                     </th>
 
                     <th colspan="5">
-                        செல்லத்தக்க வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுக்களின் எண்ணிக்கை
+                        தகுதிபெற்ற வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுக்களின் எண்ணிக்கை
                     </th>
 
                     <th colspan="5">
-                        செல்லத்தக்க வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுவை திரும்பப் பெற்ற வேட்பாளர்களின் எண்ணிக்கை
+                        தகுதி பெற்ற வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுவை திரும்பப் பெற்ற வேட்பாளர்களின் எண்ணிக்கை
+                    </th>
+
+                    <th colspan="5">
+                        தகுதி பெற்ற வேட்பு மனுக்களின் இறுதி எண்ணிக்கை
+                        (Column 5 - Column 6)
                     </th>
 
                     <th colspan="5">
@@ -69,10 +76,16 @@
 
                 <!-- SUB HEADER -->
                 <tr class="sub-header">
+                    <th>ப.இ./ப.கு</th>
+                    <th>மகளிர்</th>
+                    <th>பொது</th>
+                    <th>மொத்தம்</th>
+
                     <th>சங்கங்கள்</th>
                     <th>ப.இ./ப.கு</th>
                     <th>மகளிர்</th>
                     <th>பொது</th>
+                    <th>மொத்தம்</th>
 
                     <th>சங்கங்கள்</th>
                     <th>ப.இ./ப.கு</th>
@@ -126,15 +139,16 @@
                     <th class="col-number-cell" colspan="5">8</th>
                     <th class="col-number-cell" colspan="5">9</th>
                     <th class="col-number-cell" colspan="5">10</th>
-                    <th class="col-number-cell" colspan="2">11</th>
+                    <th class="col-number-cell" colspan="5">11</th>
+                    <th class="col-number-cell" colspan="2">12</th>
                 </tr>
 
             </thead>
 
             <tbody>
                 <tr *ngIf="tableRows.length === 0">
-                    <td colspan="39" class="empty-table-message">
-                        தயவுசெய்து முதலில் படிவம் 6-ஐ பூர்த்தி செய்யவும்.
+                    <td colspan="44" class="empty-table-message">
+                        தயவுசெய்து முதலில் படிவம் 7-ஐ பூர்த்தி செய்யவும்.
                     </td>
                 </tr>
 
@@ -152,13 +166,13 @@
                         {{ r.zone_name }}
                     </td>
 
-                    <!-- Final candidate list (names, not counts) -->
-                    <td class="text-left col-name">{{ r.society_name }}</td>
-                    <td class="text-left col-namelist">{{ r.dec_sc_names }}</td>
-                    <td class="text-left col-namelist">{{ r.dec_women_names }}</td>
-                    <td class="text-left col-namelist">{{ r.dec_general_names }}</td>
+                    <!-- Total committee members (Form4 seats) -->
+                    <td class="col-num">{{ r.seat_sc }}</td>
+                    <td class="col-num">{{ r.seat_women }}</td>
+                    <td class="col-num">{{ r.seat_general }}</td>
+                    <td class="col-num">{{ r.seat_total }}</td>
 
-                    <!-- Count of the final candidate list above -->
+                    <!-- Valid nominations count -->
                     <td class="text-left col-name">{{ r.count_society_name }}</td>
                     <td class="col-num">{{ r.count_sc }}</td>
                     <td class="col-num">{{ r.count_women }}</td>
@@ -171,6 +185,13 @@
                     <td class="col-num">{{ r.w_women }}</td>
                     <td class="col-num">{{ r.w_general }}</td>
                     <td class="col-num">{{ r.w_total }}</td>
+
+                    <!-- Final qualified count (valid − withdrawn) -->
+                    <td class="text-left col-name">{{ r.fin_society_name }}</td>
+                    <td class="col-num">{{ r.fin_sc }}</td>
+                    <td class="col-num">{{ r.fin_women }}</td>
+                    <td class="col-num">{{ r.fin_general }}</td>
+                    <td class="col-num">{{ r.fin_total }}</td>
 
                     <!-- Unopposed (equal) -->
                     <td class="text-left col-name">{{ r.eq_society_name }}</td>

@@ -26,7 +26,7 @@ interface TableRow {
   dec_total: number;
 
   polling_date: string;
-  total_voters: number;
+  total_voters: number | string;
   casted_votes_count: number;
   voting_percentage: number | string;
   ballot_box_count: number;
@@ -35,12 +35,15 @@ interface TableRow {
   stop_reason: string;
 
   rowSpan?: number;
+  // Societies in this district group where polling was actually held
+  pollingHeldCount?: number;
 }
 
 interface AbstractRow {
   district_name: string;
   zone_name: string;
   society_count: number;
+  polling_held_count: number;
   total_voters: number;
   casted_votes_count: number;
   voting_percentage: number;
@@ -66,6 +69,7 @@ export class Table7 implements OnInit {
     district_name: '',
     zone_name: '',
     society_count: 0,
+    polling_held_count: 0,
     total_voters: 0,
     casted_votes_count: 0,
     voting_percentage: 0,
@@ -173,6 +177,7 @@ export class Table7 implements OnInit {
       district_name: string;
       zone_name: string;
       societyNames: Set<string>;
+      polling_held_count: number;
       total_voters: number;
       casted_votes_count: number;
       ballot_box_total: number;
@@ -197,6 +202,8 @@ export class Table7 implements OnInit {
         const castedVotes = s.submitted_data?.casted_votes_count || 0;
         const ballotBoxCount = s.submitted_data?.ballot_box_count || 0;
         const isStopped = !!s.submitted_data?.stop_reason;
+        // Polling actually held: Form7 entered with a polling date, not stopped
+        const isPollingHeld = !!s.submitted_data?.polling_date && !isStopped;
 
         rows.push({
           serial,
@@ -215,7 +222,8 @@ export class Table7 implements OnInit {
           dec_total: this.getDeclaredTotal(s),
 
           polling_date: this.formatPollingDate(s),
-          total_voters: totalVoters,
+          // election stopped → no voter count
+          total_voters: isStopped ? '-' : totalVoters,
           casted_votes_count: castedVotes,
           voting_percentage: s.submitted_data?.voting_percentage ?? 0,
           ballot_box_count: s.submitted_data?.ballot_box_count || 0,
@@ -232,6 +240,7 @@ export class Table7 implements OnInit {
             district_name: districtName,
             zone_name: zoneName,
             societyNames: new Set<string>(),
+            polling_held_count: 0,
             total_voters: 0,
             casted_votes_count: 0,
             ballot_box_total: 0,
@@ -244,11 +253,14 @@ export class Table7 implements OnInit {
         ag.casted_votes_count += castedVotes;
         ag.ballot_box_total += ballotBoxCount;
         if (isStopped) ag.stopped_count += 1;
+        if (isPollingHeld) ag.polling_held_count += 1;
 
       });
 
       if (rows.length > groupStartIndex) {
         rows[groupStartIndex].rowSpan = rows.length - groupStartIndex;
+        rows[groupStartIndex].pollingHeldCount = societies.filter((s: any) =>
+          !!s.submitted_data?.polling_date && !s.submitted_data?.stop_reason).length;
       }
 
     });
@@ -259,6 +271,7 @@ export class Table7 implements OnInit {
       district_name: g.district_name,
       zone_name: g.zone_name,
       society_count: g.societyNames.size,
+      polling_held_count: g.polling_held_count,
       total_voters: g.total_voters,
       casted_votes_count: g.casted_votes_count,
       voting_percentage: g.total_voters > 0 ? Math.round((g.casted_votes_count / g.total_voters) * 10000) / 100 : 0,
@@ -276,6 +289,7 @@ export class Table7 implements OnInit {
       district_name: '',
       zone_name: '',
       society_count: 0,
+      polling_held_count: 0,
       total_voters: 0,
       casted_votes_count: 0,
       voting_percentage: 0,
@@ -285,6 +299,7 @@ export class Table7 implements OnInit {
 
     this.abstractRows.forEach(a => {
       totals.society_count += a.society_count;
+      totals.polling_held_count += a.polling_held_count;
       totals.total_voters += a.total_voters;
       totals.casted_votes_count += a.casted_votes_count;
       totals.ballot_box_total += a.ballot_box_total;

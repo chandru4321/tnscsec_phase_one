@@ -1,1 +1,107 @@
 /* global styles */
+
+/* ===== <table mobileCards> — rows become cards on phones =====
+   Labels come from the MobileCardsDirective (data-label on each cell).
+   !important beats the pages' own "table { display: block }" phone rules. */
+@media (max-width: 768px) {
+    table.m-cards,
+    table.m-cards tbody,
+    table.m-cards tr,
+    table.m-cards td {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    table.m-cards {
+        overflow: visible !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    table.m-cards thead {
+        display: none !important;
+    }
+
+    table.m-cards tr {
+        margin-bottom: 12px;
+        padding: 4px 12px;
+        border: 1px solid #d6ded8 !important;
+        border-radius: 10px;
+        background: #fff !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    /* label on its own line, value / input full width underneath —
+       the Tamil column headers are long */
+    table.m-cards td {
+        padding: 8px 0 !important;
+        border: none !important;
+        border-bottom: 1px solid #eef1ef !important;
+        text-align: left !important;
+        white-space: normal !important;
+        word-break: break-word;
+    }
+
+    table.m-cards td:last-child {
+        border-bottom: none !important;
+    }
+
+    table.m-cards td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 4px;
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.4;
+        color: #4b5a51;
+    }
+
+    /* cells with no header text (e.g. an empty corner) — value only */
+    table.m-cards td[data-label=""]::before {
+        display: none;
+    }
+
+    table.m-cards td input,
+    table.m-cards td select,
+    table.m-cards td textarea {
+        width: 100%;
+        min-width: 0;
+    }
+
+    table.m-cards td button {
+        white-space: normal;
+    }
+
+    /* the horizontal-scroll wrappers around these tables are not needed */
+    .table-box:has(> table.m-cards),
+    .f4-scroll-container:has(> table.m-cards),
+    .es-table-scroll:has(> table.m-cards) {
+        overflow: visible !important;
+        min-width: 0 !important;
+    }
+}
+
+/* =====================================
+   ADMIN TABLE PAGES — "படிவம் N" heading above the table
+===================================== */
+.form-heading {
+    margin: 6px 0 10px;
+    text-align: center;
+    font-family: "Noto Sans Tamil", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #3a5e0a;
+}
+
+/* "அட்டவணை N (பதிவு படிவம் N-லிருந்து)" line under the heading */
+.table-source {
+    margin: -6px 0 10px;
+    text-align: center;
+    font-family: "Noto Sans Tamil", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3a5e0a;
+}

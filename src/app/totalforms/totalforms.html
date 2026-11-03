@@ -73,37 +73,33 @@
 
           </a>
           <a *ngIf="f.code === 'Form5b' " [routerLink]="f.formLink">
-            ({{ f.code }})
+            ({{ f.label }})
             <span class="arrow">➜</span>
 
           </a>
           <a *ngIf="f.code === 'Form6' " [routerLink]="f.formLink">
-            ({{ f.code }})
+            ({{ f.label }})
             <span class="arrow">➜</span>
 
           </a>
-          <a *ngIf="f.code === 'Form6List' " [routerLink]="f.formLink">
-            ({{ f.code }})
-            <span class="arrow">➜</span>
-
-          </a>
+          <span *ngIf="f.code === 'Form6List' || f.code === 'Form8Names' || f.code === 'Form8Counts' || f.code === 'Form8Incomplete' || f.code === 'Form8Office'" class="no-submission">No Submission</span>
           <a *ngIf="f.code === 'Form7' " [routerLink]="f.formLink">
-            ({{ f.code }})
+            ({{ f.label }})
             <span class="arrow">➜</span>
 
           </a>
           <a *ngIf="f.code === 'Form8' " [routerLink]="f.formLink">
-            ({{ f.code }})
+            ({{ f.label }})
             <span class="arrow">➜</span>
 
           </a>
-          <a *ngIf="f.code === 'Form9' " [routerLink]="f.formLink">
-            ({{ f.code }})
+          <a *ngIf="f.code === 'Form9' || f.code === 'Form9b'" [routerLink]="f.formLink">
+            ({{ f.label }})
             <span class="arrow">➜</span>
 
           </a>
-          <a *ngIf="f.code === 'Form10' " [routerLink]="f.formLink">
-            ({{ f.code }})
+          <a *ngIf="f.code === 'Form10' || f.code === 'Form10b'" [routerLink]="f.formLink">
+            ({{ f.label }})
             <span class="arrow">➜</span>
 
           </a>

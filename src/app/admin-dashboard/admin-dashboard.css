@@ -65,10 +65,34 @@
     width: 75%;
 }
 
+/* FORM NUMBER BADGE */
+.forms-table td.badge-cell {
+    width: 110px;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.form-badge {
+    display: inline-block;
+    min-width: 72px;
+    text-align: center;
+    padding: 4px 12px;
+    background: #fff3cd;
+    color: #8a5a00;
+    border: 1px solid #f0c36d;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
 /* LINK COLUMN */
 .link {
     text-align: right;
-    width: 25%;
+    width: 90px;
 }
 
 .link a {
@@ -83,7 +107,16 @@
 
 .link {
     text-align: right;
-    width: 25%;
+    width: 90px;
+}
+
+/* No Abstract text (shown in place of arrow) */
+.no-abstract {
+    display: inline-block;
+    color: #888;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Arrow Design */
@@ -106,4 +139,74 @@
     border: 1px solid #0066cc;
     border-radius: 4px;
     font-size: 18px;
+}
+/* ================= MOBILE =================
+   On phones each row becomes a card: the title on its own line, then the
+   Form badge and the arrow (or "No Abstract") underneath. */
+@media (max-width: 768px) {
+
+    .forms-container {
+        padding: 16px 12px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .forms-inner {
+        width: 100%;
+    }
+
+    .election-programme-bar a {
+        flex: 1;
+        text-align: center;
+        font-size: 15px;
+    }
+
+    .forms-table,
+    .forms-table tbody,
+    .forms-table tr,
+    .forms-table td {
+        display: block;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .forms-table {
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .forms-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding: 12px 14px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .forms-table td {
+        padding: 0;
+        font-size: 15px;
+    }
+
+    .forms-table td.title {
+        flex: 1 1 100%;
+    }
+
+    .forms-table td.badge-cell,
+    .forms-table td.link {
+        width: auto !important;
+        flex: 0 0 auto;
+    }
+
+    .forms-table td.link {
+        margin-left: auto;
+    }
+
+    .arrow-link {
+        min-height: 40px;
+        min-width: 48px;
+        text-align: center;
+    }
 }

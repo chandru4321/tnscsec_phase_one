@@ -1,0 +1,65 @@
+<div class="page-content">
+
+    <app-report-actions [page]="this"></app-report-actions>
+
+    <!-- ABSTRACT -->
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 12</h2>
+    <div class="table-source">அட்டவணை 12 (பதிவு படிவம் 12-லிருந்து)</div>
+
+    <app-abstract-table *ngIf="viewMode === 'abstract'"
+        formNumber="படிவம் 12" [title]="title" [department]="selectedDepartment || department_name || 'அனைத்தும்'"
+        [groups]="abstractGroups" [rows]="abstractRows">
+    </app-abstract-table>
+
+    <!-- FULL LIST -->
+    <div class="table-scroll-wrapper" *ngIf="viewMode === 'full'">
+        <table class="report-table stopped-table">
+
+            <thead>
+
+                <tr class="top-header">
+                    <th colspan="5">படிவம் 12 &nbsp;-&nbsp; {{ title }}</th>
+                </tr>
+
+                <tr class="top-sub-header">
+                    <th colspan="5">துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}</th>
+                </tr>
+
+                <tr class="main-header">
+                    <th>வ.எண்</th>
+                    <th>மாவட்டம்</th>
+                    <th>மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
+                    <th>சங்கங்களின் பெயர்</th>
+                    <!-- கட்டம் column hidden (same as the user page) -->
+                    <th>தேர்தல் நிறுத்தப்பட்டதற்கான காரணம்</th>
+                </tr>
+
+                <tr class="col-number-row">
+                    <th class="col-number-cell">1</th>
+                    <th class="col-number-cell">2</th>
+                    <th class="col-number-cell">3</th>
+                    <th class="col-number-cell">4</th>
+                    <th class="col-number-cell">5</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                <tr *ngIf="tableRows.length === 0">
+                    <td colspan="5" class="empty-table-message">தரவு இல்லை</td>
+                </tr>
+
+                <tr *ngFor="let r of tableRows; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td class="text-left">{{ r.district_name }}</td>
+                    <td class="text-left">{{ r.zone_name }}</td>
+                    <td class="text-left">{{ r.society_name }}</td>
+                    <td class="text-left">{{ r.reason }}</td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+</div>

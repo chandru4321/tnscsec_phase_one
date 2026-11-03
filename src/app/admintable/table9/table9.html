@@ -2,158 +2,63 @@
 
     <div class="filter-section">
 
-        <label>Department:</label>
+        <div class="filter-item">
+            <label>Department:</label>
 
-        <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
+            <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
 
-            <option value="">All</option>
+                <option value="">All</option>
 
-            <option *ngFor="let d of departmentList" [value]="d.name">
+                <option *ngFor="let d of departmentList" [value]="d.name">
 
-                {{d.name}}
+                    {{d.name}}
 
-            </option>
+                </option>
 
-        </select>
+            </select>
+        </div>
 
-        <label>District:</label>
+        <div class="filter-item">
+            <label>District:</label>
 
-        <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
+            <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
 
-            <option value="">All</option>
+                <option value="">All</option>
 
-            <option *ngFor="let d of districtList" [value]="d.name">
+                <option *ngFor="let d of districtList" [value]="d.name">
 
-                {{d.name}}
+                    {{d.name}}
 
-            </option>
+                </option>
 
-        </select>
+            </select>
+        </div>
 
     </div>
 
-    <button class="export-btn" (click)="downloadPdf()">
+    <div class="action-group">
+        <button class="export-btn view-toggle-btn" (click)="toggleViewMode()">
+            {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+        </button>
 
-        📄 Download PDF
+        <button class="export-btn" (click)="downloadPdf()">
 
-    </button>
+            📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+
+        </button>
+    </div>
 
 </div>
 
-<div class="table-scroll-wrapper">
-    <table class="report-table" id="reportTable">
+<!-- FORM HEADING (above the table) -->
+<h2 class="form-heading">{{ formNumber }} ({{ part }})</h2>
+<div class="table-source">அட்டவணை {{ formNumber.replace('படிவம்', '').trim() }} ({{ part }}) (பதிவு படிவம் {{ formNumber.replace('படிவம்', '').trim() }} ({{ part }})-லிருந்து)</div>
 
-        <thead>
+<app-abstract-table *ngIf="viewMode === 'abstract'"
+    [formNumber]="formNumber + ' (' + part + ')'" [title]="title" [department]="selectedDepartment || department_name || 'அனைத்தும்'"
+    [groups]="abstract.groups" [rows]="abstract.zones">
+</app-abstract-table>
 
-            <!-- TITLE -->
-            <tr class="top-header">
-                <th colspan="32">
-                    வேட்புமனு திரும்ப பெறுதல் மற்றும் இறுதி போட்டியிடும் வேட்பாளர்கள் பற்றிய முழு விவரங்கள்
-                </th>
-            </tr>
-
-            <!-- DEPARTMENT -->
-            <tr class="top-sub-header">
-                <th colspan="32">
-                    துறை --{{department_name}}
-                </th>
-            </tr>
-
-            <!-- HEADER LEVEL 1 -->
-            <tr class="main-header">
-                <th rowspan="2" class="col-small">வ.எண்</th>
-                <th rowspan="2" class="col-medium">மாவட்டம்</th>
-                <th rowspan="2" class="col-medium">சரகம்</th>
-                <th rowspan="2" class="col-wide">வாக்குப்பதிவு நடைபெற்ற சங்கங்களின் பெயர்</th>
-
-                <th colspan="4">தலைவர் தேர்தலுக்கு தாக்கல் செய்யப்பட்ட வேட்பு மனுக்கள்/உறுப்பினர்கள்</th>
-
-                <!-- Withdrawal Count -->
-                <th colspan="4">பரிசீலனையில் நிராகரிக்கப்பட்ட வேட்பு மனுக்கள்/உறுப்பினர்கள்
-                </th>
-                <th colspan="4">தலைவர் பதவிக்கு தகுதியான இறுதி வேட்பாளர் பட்டியல் உறுப்பினர்கள்
-                </th>
-
-
-
-
-
-                <th rowspan="2" class="col-medium"> Final President or தலைவர் Name </th>
-                <th rowspan="2" class="col-medium"> Election Type </th>
-
-
-
-
-
-
-
-                <!-- HEADER LEVEL 2 -->
-            <tr class="sub-header">
-
-
-
-                <!-- Withdrawal Count -->
-                <th>ப.இ./ப.கு</th>
-                <th>பெண்கள்</th>
-                <th>பொது</th>
-                <th>மொத்தம்</th>
-
-
-
-                <!-- Final Names -->
-                <th>ப.இ./ப.கு</th>
-                <th>பெண்கள்</th>
-                <th>பொது</th>
-                <th>மொத்தம்</th>
-
-                <!-- withdrawn  Names -->
-                <th>ப.இ./ப.கு</th>
-                <th>பெண்கள்</th>
-                <th>பொது</th>
-                <th>மொத்தம்</th>
-
-                <!-- Final Names -->
-
-
-
-
-
-
-
-
-
-
-
-            </tr>
-
-        </thead>
-        <tr *ngFor="let r of tableRows; let i = index">
-            <td>{{ i + 1 }}</td>
-            <td>{{ r.district_name }}</td>
-            <td>{{ r.zone_name }}</td>
-            <td class="text-left">{{ r.society_name }}</td>
-
-            <!-- Final Counts -->
-            <td>{{ r.final_sc }}</td>
-            <td>{{ r.final_women }}</td>
-            <td>{{ r.final_general }}</td>
-            <td>{{ r.final_total }}</td>
-
-            <!-- Rejected Counts -->
-            <td>{{ r.rejected_sc }}</td>
-            <td>{{ r.rejected_women }}</td>
-            <td>{{ r.rejected_general }}</td>
-            <td>{{ r.rejected_total }}</td>
-
-            <!-- Withdrawn Counts -->
-            <td>{{ r.withdrawn_sc }}</td>
-            <td>{{ r.withdrawn_women }}</td>
-            <td>{{ r.withdrawn_general }}</td>
-            <td>{{ r.withdrawn_total }}</td>
-
-            <!-- President -->
-            <td>{{ r.president_name }}</td>
-
-            <!-- Election Type -->
-            <td>{{ r.election_type }}</td>
-        </tr>
+<div class="table-scroll-wrapper" *ngIf="viewMode === 'full'">
+    <app-form14-table [part]="part" [forms]="forms" [departmentName]="selectedDepartment || department_name || 'அனைத்தும்'"></app-form14-table>
+</div>

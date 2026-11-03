@@ -74,3 +74,77 @@
         display: none;
     }
 }
+
+/* Title row at the left edge, so it is visible without scrolling on a
+   wide table (centred, it sits off-screen on phones) */
+.top-header th {
+    text-align: left !important;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+    .page-content {
+        padding: 12px 8px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .table-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-actions button,
+    .table-actions a,
+    .action-btn,
+    .export-btn {
+        min-height: 40px;
+    }
+}
+
+/* ===== Table box — scrolls both ways, always-visible scrollbars =====
+   The names table is wide (13 columns): it keeps a readable minimum width
+   and scrolls inside this box; the height is capped so the horizontal
+   scrollbar stays on screen above the fixed footer. (form8counts,
+   form8incomplete and form8office reuse this stylesheet.) */
+.page-content {
+    padding-bottom: 60px;
+}
+
+.table-scroll-wrapper {
+    width: 100%;
+    max-height: calc(100vh - 230px);
+    overflow: auto;
+    border: 1px solid #4d7c0f;
+    background: #fff;
+    scrollbar-width: auto;
+    scrollbar-color: #4d7c0f #e5f7e5;
+}
+
+.report-table.names-table {
+    min-width: 1600px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+    height: 14px;
+    width: 14px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+    background: #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #4d7c0f;
+    border-radius: 7px;
+    border: 2px solid #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #3f6212;
+}
+
+@media (max-width: 768px) {
+    .table-scroll-wrapper {
+        max-height: 70vh;
+    }
+}

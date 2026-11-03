@@ -117,14 +117,20 @@ export class Login {
   loading: boolean = false;
   errorMessage: string = '';
 
+  capsLockOn = false;
+
+
+  checkCapsLock(event: KeyboardEvent): void {
+    this.capsLockOn = !!event.getModifierState?.('CapsLock');
+  }
+
   private auth = inject(AuthService);
   private router = inject(Router);
 
 
   login() {
 
-    console.log("Username:", this.username);
-    console.log("Password:", this.password);
+    // Never log the password or the login response (it contains the token)
 
     // TEST
     // alert('Login button clicked');
@@ -139,9 +145,7 @@ export class Login {
       console.log('TIMEOUT HIT');
 
       this.loading = false;
-      this.errorMessage = 'Something went wrong. Please try again.';
-
-      alert('Something went wrong. Please try again.');
+      this.errorMessage = 'ஏதோ தவறு நடந்துவிட்டது. மீண்டும் முயற்சிக்கவும். (Something went wrong.)';
 
     }, 10000);
 
@@ -152,8 +156,6 @@ export class Login {
         clearTimeout(timeout);
 
         this.loading = false;
-
-        console.log("LOGIN RESPONSE:", res);
 
         if (res.statusCode === 200 && res.data?.login === 'success') {
 
@@ -205,9 +207,7 @@ export class Login {
 
         } else {
 
-          this.errorMessage = 'Invalid username or password';
-
-          alert('Invalid username or password');
+          this.errorMessage = 'பயனர் பெயர் அல்லது கடவுச்சொல் தவறானது (Invalid username or password)';
         }
       },
 
@@ -219,9 +219,7 @@ export class Login {
 
         console.error("LOGIN ERROR:", err);
 
-        this.errorMessage = 'Invalid username or password';
-
-        alert('Invalid username or password');
+        this.errorMessage = 'பயனர் பெயர் அல்லது கடவுச்சொல் தவறானது (Invalid username or password)';
       }
     });
   }

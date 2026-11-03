@@ -1,0 +1,178 @@
+<section class="overview">
+
+    <!-- HEADER + FILTERS -->
+    <div class="ov-header">
+        <div>
+            <h2 class="ov-title">தேர்தல் கண்ணோட்டம்</h2>
+            <div class="ov-subtitle" *ngIf="summary">
+                Election Overview · {{ summary.generated_at | date:'dd-MM-yyyy, hh:mm a' }}
+            </div>
+        </div>
+
+        <div class="ov-filters">
+            <label>
+                <span>துறை</span>
+                <select [(ngModel)]="selectedDepartment" (change)="load()">
+                    <option value="">அனைத்தும் (All)</option>
+                    <option *ngFor="let d of departmentList" [value]="d.name">{{ d.name }}</option>
+                </select>
+            </label>
+            <label>
+                <span>மாவட்டம்</span>
+                <select [(ngModel)]="selectedDistrict" (change)="load()">
+                    <option value="">அனைத்தும் (All)</option>
+                    <option *ngFor="let d of districtList" [value]="d.name">{{ d.name }}</option>
+                </select>
+            </label>
+        </div>
+    </div>
+
+    <div class="ov-state" *ngIf="loading && !summary">ஏற்றுகிறது…</div>
+    <div class="ov-state ov-error" *ngIf="failed && !loading">
+        தகவலை ஏற்ற முடியவில்லை. <button type="button" (click)="load()">மீண்டும் முயற்சி</button>
+    </div>
+
+    <ng-container *ngIf="summary">
+
+        <!-- KPI TILES -->
+        <div class="kpi-row" [class.is-loading]="loading">
+            <div class="kpi">
+                <div class="kpi-label">தேர்தல் அறிவிப்பு சங்கங்கள்</div>
+                <div class="kpi-value">{{ summary.kpis.notice_societies }}</div>
+                <div class="kpi-note">படிவம் 1</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">வேட்புமனு தாக்கல் செய்த சங்கங்கள்</div>
+                <div class="kpi-value">{{ summary.kpis.filed_societies }}</div>
+                <div class="kpi-note">தாக்கல் இல்லை: {{ summary.kpis.not_filed_societies }}</div>
+            </div>
+            <div class="kpi kpi-good">
+                <div class="kpi-label">தேர்தல் முடிவடைந்த சங்கங்கள்</div>
+                <div class="kpi-value">{{ summary.kpis.completed_societies }}</div>
+                <div class="kpi-note"><span class="status-dot good" aria-hidden="true"></span>போட்டியின்றி + முடிவு அறிவிப்பு</div>
+            </div>
+            <div class="kpi kpi-critical">
+                <div class="kpi-label">தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்</div>
+                <div class="kpi-value">{{ summary.kpis.stopped_societies }}</div>
+                <div class="kpi-note"><span class="status-dot critical" aria-hidden="true"></span>அனைத்து நிலைகளிலும்</div>
+            </div>
+        </div>
+
+        <div class="card-grid" [class.is-loading]="loading">
+
+            <!-- FORM PROGRESS -->
+            <div class="card">
+                <div class="card-head">
+                    <h3>படிவ சமர்ப்பிப்பு நிலை</h3>
+                    <span class="card-meta">படிவம் 1 சமர்ப்பித்த {{ progressBase }} அலுவலர்களில்</span>
+                </div>
+                <ul class="progress-list">
+                    <li *ngFor="let p of summary.progress"
+                        [title]="p.form + ' — ' + p.done + ' / ' + progressBase + ' அலுவலர்கள் (' + pct(p.done, progressBase) + '%)'">
+                        <span class="pl-form">{{ p.form }}</span>
+                        <span class="pl-label">{{ p.label }}</span>
+                        <span class="pl-track"><span class="pl-fill" [style.width.%]="barWidth(p.done, progressBase)"></span></span>
+                        <span class="pl-value">{{ p.done }}<small> / {{ progressBase }}</small></span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- SOCIETY OUTCOME -->
+            <div class="card">
+                <div class="card-head">
+                    <h3>சங்கங்களின் தேர்தல் நிலை</h3>
+                    <span class="card-meta">படிவம் 7 இன்படி · {{ outcomeTotal }} சங்கங்கள்</span>
+                </div>
+
+                <div class="stack" *ngIf="outcomeTotal > 0; else noOutcome" role="img"
+                    [attr.aria-label]="'சங்கங்களின் தேர்தல் நிலை, மொத்தம் ' + outcomeTotal">
+                    <ng-container *ngFor="let s of segments">
+                        <span class="stack-seg" *ngIf="s.value > 0"
+                            [style.flex-grow]="s.value" [style.background]="s.color"
+                            [title]="s.label + ': ' + s.value + ' (' + pct(s.value, outcomeTotal) + '%)'"></span>
+                    </ng-container>
+                </div>
+                <ng-template #noOutcome><div class="empty">இன்னும் படிவம் 7 சமர்ப்பிக்கப்படவில்லை</div></ng-template>
+
+                <ul class="legend">
+                    <li *ngFor="let s of segments">
+                        <span class="swatch" [style.background]="s.color"></span>
+                        <span class="lg-label">{{ s.label }}</span>
+                        <span class="lg-value">{{ s.value }}</span>
+                        <span class="lg-pct">{{ pct(s.value, outcomeTotal) }}%</span>
+                    </li>
+                </ul>
+
+                <div class="mini-stats">
+                    <div><span>{{ summary.candidates.filed }}</span>வேட்புமனுக்கள்</div>
+                    <div><span>{{ summary.candidates.withdrawn }}</span>திரும்பப் பெற்றவை</div>
+                    <div><span>{{ summary.candidates.final }}</span>இறுதி வேட்பாளர்கள்</div>
+                </div>
+            </div>
+
+            <!-- POLLING -->
+            <div class="card">
+                <div class="card-head">
+                    <h3>வாக்குப்பதிவு</h3>
+                    <span class="card-meta">படிவம் 9</span>
+                </div>
+
+                <div class="hero">
+                    <div class="hero-value">{{ summary.polling.turnout }}<small>%</small></div>
+                    <div class="hero-label">சராசரி வாக்குப்பதிவு</div>
+                    <div class="pl-track hero-track"><span class="pl-fill" [style.width.%]="barWidth(summary.polling.turnout, 100)"></span></div>
+                </div>
+
+                <dl class="facts">
+                    <div><dt>வாக்குப்பதிவு நடைபெற்ற சங்கங்கள்</dt><dd>{{ summary.polling.held }}</dd></div>
+                    <div><dt>வாக்குப்பதிவின் போது நிறுத்தப்பட்டவை</dt><dd>{{ summary.polling.stopped }}</dd></div>
+                    <div><dt>பதிவான வாக்குகள்</dt><dd>{{ summary.polling.votes_cast | number }}</dd></div>
+                    <div><dt>மொத்த வாக்காளர்கள்</dt><dd>{{ summary.polling.voters | number }}</dd></div>
+                    <div><dt>பயன்படுத்தப்பட்ட வாக்குப்பெட்டிகள்</dt><dd>{{ summary.polling.ballot_boxes }}</dd></div>
+                </dl>
+            </div>
+
+            <!-- ELECTED -->
+            <div class="card">
+                <div class="card-head">
+                    <h3>தேர்ந்தெடுக்கப்பட்டவர்கள்</h3>
+                    <span class="card-meta">மொத்தம் {{ summary.elected.total }} உறுப்பினர்கள்</span>
+                </div>
+
+                <table class="elected-table">
+                    <thead>
+                        <tr><th></th><th>ப.இ./ப.கு</th><th>மகளிர்</th><th>பொது</th><th>மொத்தம்</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>போட்டியின்றி</th>
+                            <td>{{ summary.elected.unopposed.sc_st }}</td>
+                            <td>{{ summary.elected.unopposed.women }}</td>
+                            <td>{{ summary.elected.unopposed.general }}</td>
+                            <td class="strong">{{ summary.elected.unopposed.total }}</td>
+                        </tr>
+                        <tr>
+                            <th>வாக்குப்பதிவு மூலம்</th>
+                            <td>{{ summary.elected.polling.sc_st }}</td>
+                            <td>{{ summary.elected.polling.women }}</td>
+                            <td>{{ summary.elected.polling.general }}</td>
+                            <td class="strong">{{ summary.elected.polling.total }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="office-row">
+                    <div class="office">
+                        <span class="office-value">{{ summary.elected.presidents }}</span>
+                        <span class="office-label">தலைவர்கள் தேர்வு<br><small>படிவம் 14</small></span>
+                    </div>
+                    <div class="office">
+                        <span class="office-value">{{ summary.elected.vice_presidents }}</span>
+                        <span class="office-label">துணைத் தலைவர்கள் தேர்வு<br><small>படிவம் 15</small></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </ng-container>
+</section>

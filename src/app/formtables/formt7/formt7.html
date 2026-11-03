@@ -6,6 +6,9 @@
         </button>
     </div>
 
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 9</h2>
+
     <div class="table-scroll-wrapper">
         <table class="report-table" id="reportTable">
 
@@ -13,14 +16,14 @@
 
                 <!-- TITLE -->
                 <tr class="top-header">
-                    <th colspan="19">
+                    <th colspan="21">
                         தேர்தலில் போட்டியிடும் நிர்வாகக்குழு உறுப்பினர்களின் வாக்குப்பதிவு விவரங்கள்
                     </th>
                 </tr>
 
                 <!-- DEPARTMENT -->
                 <tr class="top-sub-header">
-                    <th colspan="19">
+                    <th colspan="21">
                         துறை -- {{ form7Data?.department?.name }}
                     </th>
                 </tr>
@@ -30,7 +33,9 @@
                     <th rowspan="2">வ.எண்</th>
                     <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் மாவட்டம்/மண்டலம்</th>
                     <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
-                    <th rowspan="2">வாக்குப்பதிவு நடைபெறும்<br> சங்கங்களின் பெயர்</th>
+                    <th rowspan="2">இறுதி வேட்பாளர் பட்டியல்படி வாக்குப்பதிவு நடைபெற வேண்டிய<br> சங்கங்களின் பெயர்</th>
+                    <th rowspan="2">இறுதி வேட்பாளர் பட்டியல்படி வாக்குப்பதிவு நடைபெற வேண்டிய<br> சங்கங்களின் எண்ணிக்கை</th>
+                    <th rowspan="2">தேர்தல் நடத்தி வாக்குப்பதிவு நடைபெற்ற<br> சங்கங்களின் எண்ணிக்கை</th>
 
                     <th colspan="4">தேர்ந்தெடுக்கப்பட வேண்டிய நிர்வாகக்குழு <br>இயக்குநர்களின் எண்ணிக்கை</th>
 
@@ -65,14 +70,16 @@
                     <th class="col-number-cell">2</th>
                     <th class="col-number-cell">3</th>
                     <th class="col-number-cell">4</th>
-                    <th class="col-number-cell" colspan="4">5</th>
-                    <th class="col-number-cell" colspan="4">6</th>
-                    <th class="col-number-cell">7</th>
-                    <th class="col-number-cell">8</th>
+                    <th class="col-number-cell">5</th>
+                    <th class="col-number-cell">6</th>
+                    <th class="col-number-cell" colspan="4">7</th>
+                    <th class="col-number-cell" colspan="4">8</th>
                     <th class="col-number-cell">9</th>
                     <th class="col-number-cell">10</th>
                     <th class="col-number-cell">11</th>
-                    <th class="col-number-cell" colspan="2">12</th>
+                    <th class="col-number-cell">12</th>
+                    <th class="col-number-cell">13</th>
+                    <th class="col-number-cell" colspan="2">14</th>
                 </tr>
 
             </thead>
@@ -85,6 +92,8 @@
                     <td *ngIf="i === 0" [attr.rowspan]="societies.length">{{ form7Data?.district?.name }}</td>
                     <td *ngIf="i === 0" [attr.rowspan]="societies.length">{{ s.zone_name }}</td>
                     <td>{{ s.society_name }}</td>
+                    <td *ngIf="i === 0" [attr.rowspan]="societies.length">{{ societies.length }}</td>
+                    <td *ngIf="i === 0" [attr.rowspan]="societies.length">{{ pollingHeldCount() }}</td>
 
                     <!-- Rural -->
                     <td>{{ getRuralValue(s,'sc_st') }}</td>
@@ -102,7 +111,8 @@
 
                     <!-- Other Data -->
                     <td>{{ s.submitted_data?.polling_date ? (s.submitted_data.polling_date | date:'dd-MM-yyyy') : '-' }}</td>
-                    <td>{{ s.form3_total }}</td>
+                    <!-- election stopped → no voter count -->
+                    <td>{{ s.submitted_data?.stop_reason ? '-' : s.form3_total }}</td>
                     <td>{{ s.submitted_data?.casted_votes_count }}</td>
                     <td>{{ s.submitted_data?.voting_percentage }}</td>
                     <td>{{ s.submitted_data?.ballot_box_count }}</td>

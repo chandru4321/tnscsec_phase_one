@@ -34,6 +34,8 @@ interface TableRow {
   less_women_names: string;
   less_general_names: string;
   less_total: number;
+  stopped_society_name: string;
+  stop_reason: string;
 
   rowSpan?: number;
 }
@@ -78,13 +80,19 @@ export class Formt6List implements OnInit {
 
         const rows: TableRow[] = [];
 
-        const eqCount = societies.filter((s: any) => s.election_status === 'UNOPPOSED').length;
-        const lessCount = societies.filter((s: any) => s.election_status === 'UNQUALIFIED').length;
+        // A society stopped entirely within Form6 (election_action
+        // "STOP") must not appear in any of the 3 groups below — it also
+        // carries election_status "UNQUALIFIED", which would otherwise
+        // leak it into the unqualified group too.
+        const eqCount = societies.filter((s: any) => s.election_action !== 'STOP' && s.election_status === 'UNOPPOSED').length;
+        const lessCount = societies.filter((s: any) => s.election_action !== 'STOP' && s.election_status === 'UNQUALIFIED').length;
 
         societies.forEach((soc: any, index: number) => {
 
-          const isUnopposed = soc.election_status === 'UNOPPOSED';
-          const isUnqualified = soc.election_status === 'UNQUALIFIED';
+          const isStopped = soc.election_action === 'STOP';
+          const isQualified = !isStopped && soc.election_status === 'QUALIFIED';
+          const isUnopposed = !isStopped && soc.election_status === 'UNOPPOSED';
+          const isUnqualified = !isStopped && soc.election_status === 'UNQUALIFIED';
 
           const scNames = (soc.final_scst_names || []).join(', ') || '-';
           const womenNames = (soc.final_women_names || []).join(', ') || '-';
@@ -98,11 +106,14 @@ export class Formt6List implements OnInit {
             district_name: district,
             zone_name: zone,
 
-            society_name: soc.society_name || '-',
-            sc_names: scNames,
-            women_names: womenNames,
-            general_names: generalNames,
-            total,
+            // "போட்டியிடும்...சங்கங்கள்" = societies CONTESTING the
+            // election — QUALIFIED-only: an UNOPPOSED society wins
+            // without a contest, an UNQUALIFIED one never reaches one.
+            society_name: isQualified ? (soc.society_name || '-') : '-',
+            sc_names: isQualified ? scNames : '-',
+            women_names: isQualified ? womenNames : '-',
+            general_names: isQualified ? generalNames : '-',
+            total: isQualified ? total : 0,
             dec_count: societies.length,
 
             eq_society_name: isUnopposed ? (soc.society_name || '-') : '-',
@@ -118,6 +129,10 @@ export class Formt6List implements OnInit {
             less_women_names: isUnqualified ? womenNames : '-',
             less_general_names: isUnqualified ? generalNames : '-',
             less_total: isUnqualified ? total : 0,
+
+            // stopped in Form6 (election_action STOP); remark holds the reason
+            stopped_society_name: isStopped ? (soc.society_name || '-') : '-',
+            stop_reason: isStopped ? (soc.remark || '-') : '-',
 
             rowSpan: index === 0 ? societies.length : undefined
           });

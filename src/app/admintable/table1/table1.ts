@@ -67,11 +67,13 @@ interface TableRow {
   group_non_selected_count: number;
 }
 
-// One row per district+zone group with everything summed —
-// no per-society names, counts only.
+// One row per district with everything summed across all its circles —
+// no per-society names, counts only. zone_count is how many distinct
+// circles were rolled into this district's totals.
 interface AbstractRow {
   district_name: string;
   zone_name: string;
+  zone_count: number;
   masterzone_count: number;
   selectedCount: number;
   scStTotal: number;
@@ -111,6 +113,7 @@ export class Table1 implements OnInit {
   grandTotal: AbstractRow = {
     district_name: '',
     zone_name: '',
+    zone_count: 0,
     masterzone_count: 0,
     selectedCount: 0,
     scStTotal: 0,
@@ -275,6 +278,7 @@ export class Table1 implements OnInit {
         groups.set(key, {
           district_name: r.district_name,
           zone_name: r.zone_name,
+          zone_count: 1,
           masterzone_count: 0,
           selectedCount: 0,
           scStTotal: 0,
@@ -329,6 +333,7 @@ export class Table1 implements OnInit {
     const totals: AbstractRow = {
       district_name: '',
       zone_name: '',
+      zone_count: 0,
       masterzone_count: 0,
       selectedCount: 0,
       scStTotal: 0,
@@ -343,6 +348,7 @@ export class Table1 implements OnInit {
     };
 
     this.abstractRows.forEach(g => {
+      totals.zone_count += g.zone_count;
       totals.masterzone_count += g.masterzone_count;
       totals.selectedCount += g.selectedCount;
       totals.scStTotal += g.scStTotal;

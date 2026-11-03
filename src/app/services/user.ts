@@ -1230,6 +1230,108 @@ export class UserService {
     );
 
   }
+
+  /* ===== Admin reports: Form8 / Form10 / Form11 / Form12 ===== */
+
+  private reportParams(departmentId?: number, districtId?: number): any {
+    const params: any = {};
+    if (departmentId) params.department_id = departmentId;
+    if (districtId) params.district_id = districtId;
+    return params;
+  }
+
+  // Form11 — elected committee names (same rows as its PDFs)
+  getForm11List(departmentId?: number, districtId?: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/form8/name/list`,
+      { params: this.reportParams(departmentId, districtId) });
+  }
+
+  // Form12 — stopped societies (same rows as its PDFs)
+  getForm12List(departmentId?: number, districtId?: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/form8/stopped/list`,
+      { params: this.reportParams(departmentId, districtId) });
+  }
+
+  // படிவம் 16 — elected members, president, vice-president (form8office page)
+  getForm8OfficeList(departmentId?: number, districtId?: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/form8/office/list`,
+      { params: this.reportParams(departmentId, districtId) });
+  }
+
+  getForm8OfficePdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/office/pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  // Societies whose election did not complete — reason-wise (form8incomplete page)
+  getForm8IncompleteList(departmentId?: number, districtId?: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/form8/incomplete/list`,
+      { params: this.reportParams(departmentId, districtId) });
+  }
+
+  getForm8IncompletePdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/incomplete/pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  // Elected committee member counts (form8counts page)
+  // Admin overview dashboard — one summary across every form
+  getDashboardSummary(departmentId?: number, districtId?: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/dashboard/summary`,
+      { params: this.reportParams(departmentId, districtId) });
+  }
+
+  // படிவம் 12 – 16 abstract PDFs (district/zone-wise summary)
+  getCountAbstractPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/count/abstract-pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  getIncompleteAbstractPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/incomplete/abstract-pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  getOfficeAbstractPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/office/abstract-pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  // part 'a' / 'b' — படிவம் 14 (president) and 15 (vice-president)
+  getPresidentAbstractPdf(departmentId?: number, districtId?: number, part: 'a' | 'b' = 'a') {
+    return this.http.get(`${this.baseUrl}/form8/president/abstract-pdf`,
+      { params: { ...this.reportParams(departmentId, districtId), part }, responseType: 'blob' });
+  }
+
+  getVicePresidentAbstractPdf(departmentId?: number, districtId?: number, part: 'a' | 'b' = 'a') {
+    return this.http.get(`${this.baseUrl}/form8/vice-president/abstract-pdf`,
+      { params: { ...this.reportParams(departmentId, districtId), part }, responseType: 'blob' });
+  }
+
+  getForm8CountPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/count/pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  getForm8ListAbstractPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/list-abstract-pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  getForm10AbstractPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/abstract-pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  getForm11AbstractPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/name/abstract-pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
+
+  getForm12AbstractPdf(departmentId?: number, districtId?: number) {
+    return this.http.get(`${this.baseUrl}/form8/stopped/abstract-pdf`,
+      { params: this.reportParams(departmentId, districtId), responseType: 'blob' });
+  }
   getEditableForm8(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/form8/editable`);
   }
@@ -1266,6 +1368,20 @@ export class UserService {
   }
   form9societyfinalize(payload: any) {
     return this.http.post(`${this.baseUrl}/form9/society-finalize`, payload);
+  }
+  // Stop / resume a society's president election (Form15 column 10)
+  form9stop(payload: { form9_society_id: number; stop_reason: string; stop_other_reason_text?: string }) {
+    return this.http.post(`${this.baseUrl}/form9/stop`, payload);
+  }
+  form9resume(payload: { form9_society_id: number }) {
+    return this.http.post(`${this.baseUrl}/form9/resume`, payload);
+  }
+  // Edit a submitted Form9: reopen it as a draft / reset one society
+  form9reopen() {
+    return this.http.post(`${this.baseUrl}/form9/reopen`, {});
+  }
+  form9societyreset(payload: { form9_society_id: number }) {
+    return this.http.post(`${this.baseUrl}/form9/society-reset`, payload);
   }
   form9submit(payload: any) {
     return this.http.post(`${this.baseUrl}/form9/submit`, payload);
@@ -1305,9 +1421,10 @@ export class UserService {
 
   }
 
-  getForm9Pdf(departmentId?: number, districtId?: number) {
+  // part: 'a' = படிவம் 14 (a), 'b' = படிவம் 14 (b)
+  getForm9Pdf(departmentId?: number, districtId?: number, part: 'a' | 'b' = 'a') {
 
-    let params: any = {};
+    let params: any = { part };
 
     if (departmentId) {
       params.department_id = departmentId;
@@ -1351,6 +1468,20 @@ export class UserService {
   form10societyfinalize(payload: any) {
     return this.http.post(`${this.baseUrl}/form10/society-finalize`, payload);
   }
+  // Stop / resume a society's vice-president election (Form16 column 10)
+  form10stop(payload: { form10_society_id: number; stop_reason: string; stop_other_reason_text?: string }) {
+    return this.http.post(`${this.baseUrl}/form10/stop`, payload);
+  }
+  form10resume(payload: { form10_society_id: number }) {
+    return this.http.post(`${this.baseUrl}/form10/resume`, payload);
+  }
+  // Edit a submitted Form10: reopen it as a draft / reset one society
+  form10reopen() {
+    return this.http.post(`${this.baseUrl}/form10/reopen`, {});
+  }
+  form10societyreset(payload: { form10_society_id: number }) {
+    return this.http.post(`${this.baseUrl}/form10/society-reset`, payload);
+  }
   form10submit(payload: any) {
     return this.http.post(`${this.baseUrl}/form10/submit`, payload);
   }
@@ -1386,9 +1517,10 @@ export class UserService {
 
   }
 
-  getForm10Pdf(departmentId?: number, districtId?: number) {
+  // part: 'a' = படிவம் 15 (a), 'b' = படிவம் 15 (b)
+  getForm10Pdf(departmentId?: number, districtId?: number, part: 'a' | 'b' = 'a') {
 
-    let params: any = {};
+    let params: any = { part };
 
     if (departmentId) {
       params.department_id = departmentId;

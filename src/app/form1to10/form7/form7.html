@@ -1,8 +1,11 @@
 <div class="page-bg">
 
-    <h2 class="form">படிவம் 7</h2>
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
+
+    <h2 class="form">படிவம் 9</h2>
     <h2 class="form-title">
-        வேட்புமனு தாக்கல் செய்த உறுப்பினர்களின் பெயர் மற்றும் விபரம்
+        தேர்தலில் போட்டியிடும் நிர்வாகக்குழு உறுப்பினர்களின் வாக்குப்பதிவு விவரங்கள்
     </h2>
 
     <!-- ================= F1 & F2 ================= -->
@@ -25,7 +28,7 @@
     </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -56,7 +59,7 @@
     </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -86,7 +89,7 @@
         வாக்குப்பதிவு நடைபெறும் சங்கங்களின் பெயர் மற்றும் விபரம் </label>
 
     <div class="table-box scroll-table">
-        <table>
+        <table mobileCards>
             <thead class="f5-head">
                 <tr>
                     <th>வ.எண்</th>
@@ -152,7 +155,9 @@
                     <!-- casted_votes_count -->
                     <td>
                         <input type="number" class="table-input" [(ngModel)]="s.casted_votes_count"
-                            (input)="calculatePercentage(s)">
+                            (input)="calculatePercentage(s)" min="0" [max]="s.form3_total"
+                            (blur)="checkVotes(s)" [class.input-error]="votesExceed(s)"
+                            [title]="votesExceed(s) ? 'மொத்த வாக்காளர்களை விட அதிகம்' : ''">
                     </td>
 
                     <!-- voting_percentage -->

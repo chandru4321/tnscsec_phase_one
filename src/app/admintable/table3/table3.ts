@@ -6,6 +6,22 @@ import { saveAs } from 'file-saver';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
+// Stop reason codes (same as Form5B / Form7) → Tamil label
+const STOP_REASONS: Record<string, string> = {
+  legal_order: 'சட்ட ஒழுங்கு',
+  natural_disaster: 'இயற்கை பேரிடர்',
+  court_injunction: 'நீதிமன்ற தடையாணை',
+  election_cancelled_by_commission: 'ஆணையத்தால் தேர்தல் ரத்து',
+  insufficient_candidates: 'சிற்றெண் குறைவு',
+  other: 'இதர காரணங்கள்'
+};
+
+const stopReasonLabel = (soc: any): string => {
+  const label = STOP_REASONS[soc.stop_reason] || soc.stop_reason || '-';
+  return soc.stop_reason === 'other' && soc.stop_other_reason_text
+    ? `${label} - ${soc.stop_other_reason_text}` : label;
+};
+
 interface TableRow {
   district_name: string;
   zone_name: string;
@@ -24,22 +40,33 @@ interface TableRow {
   rcount: number;               // added (சேர்க்கப்பட்ட)
   total: number | null;         // final voter list count
 
+  // Election stopped at Form3 — name + reason
+  stopped_society_name: string;
+  stop_reason_display: string;
+
   rowSpan?: number;
   districtSerial?: number;
 }
 
-// One row per district+zone group with everything summed —
-// no per-society names, counts only.
+// One row per district with everything summed across all its circles —
+// no per-society names, counts only. zone_count is how many distinct
+// circles were rolled into this district's totals.
 interface AbstractRow {
   district_name: string;
   zone_name: string;
+  zone_count: number;
   societyCount: number;
   memberSocCount: number;
+  memberSocMembers: number;      // draft-list members of the societies that gave a list
   nonMemberSocCount: number;
+  nonMemberSocMembers: number;   // draft-list members of the societies that did not
   assMemlistTotal: number;
+  rcountSocCount: number;        // societies with at least one member added
   rcountTotal: number;
+  jcountSocCount: number;        // societies with at least one member removed
   jcountTotal: number;
   finalVotersTotal: number;
+  stoppedCount: number;
 }
 
 @Component({
@@ -59,13 +86,19 @@ export class Table3 implements OnInit {
   grandTotal: AbstractRow = {
     district_name: '',
     zone_name: '',
+    zone_count: 0,
     societyCount: 0,
     memberSocCount: 0,
+    memberSocMembers: 0,
     nonMemberSocCount: 0,
+    nonMemberSocMembers: 0,
     assMemlistTotal: 0,
+    rcountSocCount: 0,
     rcountTotal: 0,
+    jcountSocCount: 0,
     jcountTotal: 0,
-    finalVotersTotal: 0
+    finalVotersTotal: 0,
+    stoppedCount: 0
   };
 
   department_name = '';
@@ -208,6 +241,9 @@ export class Table3 implements OnInit {
 
           total: soc.total ?? null,
 
+          stopped_society_name: soc.is_stopped ? soc.society_name : '-',
+          stop_reason_display: soc.is_stopped ? stopReasonLabel(soc) : '-',
+
           rowSpan: index === 0 ? span : undefined,
           districtSerial: index === 0 ? districtSerial : undefined
 
@@ -238,26 +274,41 @@ export class Table3 implements OnInit {
         groups.set(key, {
           district_name: r.district_name,
           zone_name: r.zone_name,
+          zone_count: 1,
           societyCount: 0,
           memberSocCount: 0,
+          memberSocMembers: 0,
           nonMemberSocCount: 0,
+          nonMemberSocMembers: 0,
           assMemlistTotal: 0,
+          rcountSocCount: 0,
           rcountTotal: 0,
+          jcountSocCount: 0,
           jcountTotal: 0,
-          finalVotersTotal: 0
+          finalVotersTotal: 0,
+          stoppedCount: 0
         });
       }
 
       const g = groups.get(key)!;
 
       g.societyCount += 1;
-      if (r.member_society_name) g.memberSocCount += 1;
-      if (r.non_member_society_name) g.nonMemberSocCount += 1;
+      if (r.member_society_name) {
+        g.memberSocCount += 1;
+        g.memberSocMembers += r.ass_memlist ?? 0;
+      }
+      if (r.non_member_society_name) {
+        g.nonMemberSocCount += 1;
+        g.nonMemberSocMembers += r.ass_memlist ?? 0;
+      }
 
       g.assMemlistTotal += r.ass_memlist ?? 0;
+      if ((r.rcount ?? 0) > 0) g.rcountSocCount += 1;
       g.rcountTotal += r.rcount ?? 0;
+      if ((r.jcount ?? 0) > 0) g.jcountSocCount += 1;
       g.jcountTotal += r.jcount ?? 0;
       g.finalVotersTotal += r.total ?? 0;
+      if (r.stopped_society_name !== '-') g.stoppedCount += 1;
 
     });
 
@@ -273,23 +324,35 @@ export class Table3 implements OnInit {
     const totals: AbstractRow = {
       district_name: '',
       zone_name: '',
+      zone_count: 0,
       societyCount: 0,
       memberSocCount: 0,
+      memberSocMembers: 0,
       nonMemberSocCount: 0,
+      nonMemberSocMembers: 0,
       assMemlistTotal: 0,
+      rcountSocCount: 0,
       rcountTotal: 0,
+      jcountSocCount: 0,
       jcountTotal: 0,
-      finalVotersTotal: 0
+      finalVotersTotal: 0,
+      stoppedCount: 0
     };
 
     this.abstractRows.forEach(g => {
+      totals.zone_count += g.zone_count;
       totals.societyCount += g.societyCount;
       totals.memberSocCount += g.memberSocCount;
+      totals.memberSocMembers += g.memberSocMembers;
       totals.nonMemberSocCount += g.nonMemberSocCount;
+      totals.nonMemberSocMembers += g.nonMemberSocMembers;
       totals.assMemlistTotal += g.assMemlistTotal;
+      totals.rcountSocCount += g.rcountSocCount;
       totals.rcountTotal += g.rcountTotal;
+      totals.jcountSocCount += g.jcountSocCount;
       totals.jcountTotal += g.jcountTotal;
       totals.finalVotersTotal += g.finalVotersTotal;
+      totals.stoppedCount += g.stoppedCount;
     });
 
     this.grandTotal = totals;

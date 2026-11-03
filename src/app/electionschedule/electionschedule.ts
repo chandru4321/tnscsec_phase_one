@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MobileCardsDirective } from '../shared/mobile-cards.directive';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, forkJoin } from 'rxjs';
@@ -59,7 +60,7 @@ const CHECKLIST: { no: number; programme: string; statutoryRequirement: string }
 @Component({
   selector: 'app-electionschedule',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MobileCardsDirective],
   templateUrl: './electionschedule.html',
   styleUrls: ['./electionschedule.css']
 })

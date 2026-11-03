@@ -1,9 +1,18 @@
 <div class="page-bg">
 
-    <h2 class="form">படிவம் 10</h2>
+    <h2 class="form">படிவம் 15 ({{ part }})</h2>
     <h2 class="form-title">
         துணைத் தலைவர் தேர்தல் விவரம்
     </h2>
+
+    <!-- Already submitted: Edit (reopen) until the next form is submitted -->
+    <div class="submitted-banner" *ngIf="isFormSubmitted">
+        <span>✔ இந்த படிவம் சமர்ப்பிக்கப்பட்டது.</span>
+        <button class="edit-btn" *ngIf="submittedCanEdit" (click)="editSubmittedForm()">திருத்து</button>
+        <span class="locked-note" *ngIf="!submittedCanEdit">
+            🔒 அடுத்த படிவம் சமர்ப்பிக்கப்பட்டதால் இதை திருத்த முடியாது.
+        </span>
+    </div>
 
     <div class="row">
         <div class="col">
@@ -19,6 +28,9 @@
         </div>
     </div>
 
+    <!-- ===== 15 (a): filing, scrutiny, withdrawal ===== -->
+    <ng-container *ngIf="part === 'a'">
+
     <!-- ================================================= -->
     <!-- F3 — VIEW ONLY -->
     <!-- ================================================= -->
@@ -32,6 +44,7 @@
             <tr>
                 <th>வ. எண்</th>
                 <th>சங்கத்தின் பெயர்</th>
+                <th>உறுப்பினர்கள் எண்ணிக்கை</th>
                 <th>செயல்</th>
             </tr>
         </thead>
@@ -40,6 +53,7 @@
             <tr *ngFor="let row of f3List; let i = index">
                 <td>{{ i + 1 }}</td>
                 <td>{{ row.society_name }}</td>
+                <td>{{ row.candidates?.length || 0 }}</td>
                 <td>
                     <button class="add-btn" (click)="viewSocietyDetails(row)">
                         பார்க்க
@@ -85,6 +99,7 @@
 
     <label class="table-label">
         பரிசீலனையில் நிராகரிக்கப்பட்ட வேட்பு மனுக்கள்/உறுப்பினர்கள் - பெயர்கள்
+        <!-- எண்ணிக்கை -->
     </label>
 
     <table class="form-table">
@@ -110,45 +125,11 @@
     </table>
 
     <!-- ================================================= -->
-    <!-- TABLE 4 — WITHDRAW SELECTION -->
+    <!-- 15 (a) col 8 — WITHDRAWAL FROM THE ELIGIBLE CANDIDATES -->
     <!-- ================================================= -->
 
     <label class="table-label">
-        திரும்பப் பெற வேண்டிய வேட்பு மனுக்கள்/உறுப்பினர்களைத் தேர்வு செய்க
-    </label>
-
-    <div *ngIf="showF4Table">
-
-        <table class="form-table">
-            <thead>
-                <tr>
-                    <th>வ. எண்</th>
-                    <th>சங்கத்தின் பெயர்</th>
-                    <th>செயல்</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                <tr *ngFor="let row of f4List; let i = index">
-                    <td>{{ i + 1 }}</td>
-                    <td>{{ row.society_name }}</td>
-                    <td>
-                        <button class="add-btn" (click)="addSociety(row, 'WITHDRAW')">
-                            தேர்வு செய்க
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-    </div>
-
-    <!-- ================================================= -->
-    <!-- TABLE 5 — WITHDRAWN SOCIETIES, VIEW ONLY -->
-    <!-- ================================================= -->
-
-    <label class="table-label">
-        திரும்பப் பெறப்பட்ட வேட்பு மனுக்கள்/உறுப்பினர்கள் - பெயர்கள்
+        தகுதி பெற்ற வேட்பாளர்களிலிருந்து வேட்பு மனுவை திரும்ப பெறுதல்
     </label>
 
     <table class="form-table">
@@ -159,27 +140,55 @@
                 <th>செயல்</th>
             </tr>
         </thead>
-
         <tbody>
-            <tr *ngFor="let row of f4WithdrawnList; let i = index">
+            <tr *ngIf="withdrawList.length === 0">
+                <td colspan="3" class="empty-row">திரும்பப் பெறுதலுக்கு காத்திருக்கும் சங்கங்கள் இல்லை</td>
+            </tr>
+            <tr *ngFor="let row of withdrawList; let i = index">
                 <td>{{ i + 1 }}</td>
                 <td>{{ row.society_name }}</td>
                 <td>
-                    <button class="add-btn" (click)="viewSocietyDetails(row)">
-                        பார்க்க
+                    <button class="add-btn" (click)="addSociety(row, 'WITHDRAW')">
+                        தேர்வு செய்க
                     </button>
                 </td>
             </tr>
         </tbody>
     </table>
 
+    </ng-container>
+
+    <!-- ===== 15 (b): votes, stop election ===== -->
+    <ng-container *ngIf="part === 'b'">
+
     <!-- ================================================= -->
-    <!-- TABLE 6 — FINAL VICE PRESIDENT SELECTION (POLL) -->
+    <!-- 15 (b) — VOTES FOR THE FINAL CANDIDATES (POLL) -->
     <!-- ================================================= -->
 
     <label class="table-label">
-        துணைத் தலைவர் பதவிக்கு தகுதியான இறுதி வேட்பாளர் பட்டியல்
+        படிவம் 15 (b) — துணைத் தலைவர் தேர்தலில் போட்டியிட்ட வேட்பாளர்கள் பெற்ற வாக்குகள்
     </label>
+
+    <!-- Nothing to vote on yet: say why, and where to go -->
+    <div class="pending-note" *ngIf="!showF5Table && !isFormSubmitted">
+        <ng-container *ngIf="(firstSelectionList.length + withdrawList.length) > 0; else noPoll">
+            <p>
+                {{ firstSelectionList.length + withdrawList.length }} சங்கங்கள் படிவம் 15 (a)-ல்
+                <span *ngIf="firstSelectionList.length">பரிசீலனை</span>
+                <span *ngIf="firstSelectionList.length && withdrawList.length"> / </span>
+                <span *ngIf="withdrawList.length">வேட்பு மனு திரும்பப் பெறுதல்</span>
+                நிலையில் உள்ளன. அதை முடித்த பின் வாக்குப்பதிவு நடைபெறும் சங்கங்கள் இங்கு வரும்.
+            </p>
+            <ul>
+                <li *ngFor="let r of firstSelectionList">{{ r.society_name }} — பரிசீலனை</li>
+                <li *ngFor="let r of withdrawList">{{ r.society_name }} — திரும்பப் பெறுதல்</li>
+            </ul>
+            <button class="add-btn" (click)="goToPart('a')">← படிவம் 15 (a)-க்கு செல்ல</button>
+        </ng-container>
+        <ng-template #noPoll>
+            <p>வாக்குப்பதிவு நடைபெற வேண்டிய சங்கங்கள் இல்லை.</p>
+        </ng-template>
+    </div>
 
     <div *ngIf="showF5Table">
 
@@ -198,7 +207,7 @@
                     <td>{{ row.society_name }}</td>
                     <td>
                         <button class="add-btn" [disabled]="row.submitted" (click)="addSociety(row, 'FINALIZE')">
-                            {{ row.submitted ? 'சமர்ப்பிக்கப்பட்டது' : 'தேர்வு செய்க' }}
+                            {{ row.submitted ? 'சமர்ப்பிக்கப்பட்டது' : 'வாக்குகள் உள்ளீடு' }}
                         </button>
                     </td>
                 </tr>
@@ -207,8 +216,10 @@
 
     </div>
 
+    </ng-container>
+
     <!-- ================================================= -->
-    <!-- TABLE 7 — FINALIZED RESULTS (Vice President / Election type) -->
+    <!-- TABLE 7 — FINALIZED RESULTS (President / Election type) -->
     <!-- ================================================= -->
 
     <div *ngIf="finalizedResultsList.length">
@@ -225,6 +236,7 @@
                     <th>சங்கத்தின் பெயர்</th>
                     <th>துணைத் தலைவர் பெயர்</th>
                     <th>தேர்தல் முறை</th>
+                    <th>செயல்</th>
                 </tr>
             </thead>
 
@@ -233,7 +245,12 @@
                     <td>{{ i + 1 }}</td>
                     <td>{{ row.society_name }}</td>
                     <td>{{ row.vice_president_name }}</td>
-                    <td>{{ row.election_type }}</td>
+                    <td>{{ electionTypeLabel(row.election_type) }}</td>
+                    <td>
+                        <button class="edit-btn" [disabled]="isFormSubmitted" (click)="resetSociety(row)">
+                            திருத்து
+                        </button>
+                    </td>
                 </tr>
             </tbody>
 
@@ -241,10 +258,90 @@
 
     </div>
 
+    <!-- ===== 15 (b): stop election (column 16) ===== -->
+    <ng-container *ngIf="part === 'b'">
+
+    <!-- ================================================= -->
+    <!-- STOP ELECTION — any society not yet finalized (column 10) -->
+    <!-- ================================================= -->
+
+    <div *ngIf="stoppableList.length">
+
+        <label class="table-label">
+            துணைத் தலைவர் தேர்தலை நிறுத்த வேண்டிய சங்கங்கள்
+        </label>
+
+        <table class="form-table">
+            <thead>
+                <tr>
+                    <th>வ. எண்</th>
+                    <th>சங்கத்தின் பெயர்</th>
+                    <th>செயல்</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let row of stoppableList; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ row.society_name }}</td>
+                    <td>
+                        <button class="stop-btn" [disabled]="isFormSubmitted" (click)="openStop(row)">
+                            தேர்தலை நிறுத்து
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- ================================================= -->
+    <!-- STOPPED SOCIETIES — with reason -->
+    <!-- ================================================= -->
+
+    <div *ngIf="stoppedList.length">
+
+        <label class="table-label">
+            துணைத் தலைவர் தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்
+        </label>
+
+        <table class="form-table">
+            <thead>
+                <tr>
+                    <th>வ. எண்</th>
+                    <th>சங்கத்தின் பெயர்</th>
+                    <th>துணைத் தலைவர் தேர்தல் நிறுத்தப்பட்ட காரணம்</th>
+                    <th>செயல்</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let row of stoppedList; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ row.society_name }}</td>
+                    <td>{{ row.reason }}</td>
+                    <td>
+                        <button class="add-btn" [disabled]="isFormSubmitted" (click)="resumeElection(row)">
+                            மீண்டும் தொடங்கு
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    </ng-container>
+
     <div class="form-footer">
         <button class="cancel-btn" (click)="goBack()">ரத்து செய்</button>
 
-        <button class="submit-btn" [disabled]="isFormSubmitted" (click)="submitForm10()">
+        <!-- 15 (a) continues in 15 (b); the whole form is submitted there -->
+        <button class="submit-btn" *ngIf="part === 'a'" (click)="goToPart('b')">
+            அடுத்து: படிவம் 15 (b) →
+        </button>
+
+        <button class="submit-btn" *ngIf="part === 'b'" [disabled]="isFormSubmitted" (click)="submitForm10()">
             {{ isFormSubmitted ? 'சமர்ப்பிக்கப்பட்டது' : 'சமர்ப்பிக்க' }}
         </button>
     </div>
@@ -275,13 +372,14 @@
             </div>
 
             <!-- ============================= -->
-            <!-- TABLE 4 → WITHDRAW — Multiple selection -->
-            <!-- Checked = continue, Unchecked = withdrawn -->
+            <!-- 15 (a) col 8 → WITHDRAW — checked = continues -->
             <!-- ============================= -->
             <div *ngIf="currentAction === 'WITHDRAW'">
 
                 <p class="modal-hint">
-                    தொடர வேண்டிய உறுப்பினர்களைத் தேர்வு செய்க. தேர்வு செய்யப்படாதவர்கள் திரும்பப் பெறப்படுவார்கள்.
+                    தொடர்ந்து போட்டியிடும் வேட்பாளர்களைத் தேர்வு செய்க. தேர்வு நீக்கப்பட்டவர்கள் வேட்பு மனுவை
+                    திரும்ப பெற்றவர்களாக கருதப்படுவார்கள். ஒருவர் மட்டும் தொடர்ந்தால் போட்டியின்றி துணைத் தலைவராக
+                    தேர்ந்தெடுக்கப்படுவார்.
                 </p>
 
                 <label *ngFor="let c of candidates">
@@ -292,17 +390,42 @@
             </div>
 
             <!-- ============================= -->
-            <!-- TABLE 6 → FINALIZE — Single select, POLL -->
+            <!-- 15 (b) → FINALIZE — votes per candidate, highest wins -->
             <!-- ============================= -->
             <div *ngIf="currentAction === 'FINALIZE'">
 
-                <h4>Vice President Selection</h4>
+                <h4>பெற்ற வாக்குகள்</h4>
 
-                <label *ngFor="let c of candidates">
-                    <input type="checkbox" [checked]="c.form5_member_id === selectedVicePresidentId"
-                        (change)="selectVicePresident(c)">
-                    {{ c.member_name }} - {{ maskAadhar(c.aadhar_no) }}
-                </label>
+                <div class="vote-summary" [class.over]="votesOverLimit" [class.done]="votesTally">
+                    <span>மொத்த வாக்காளர்கள் (நிர்வாகக்குழு உறுப்பினர்கள்): <strong>{{ voterCount }}</strong></span>
+                    <span>உள்ளிட்ட வாக்குகள்: <strong>{{ votesEntered }}</strong></span>
+                    <span>மீதம்: <strong>{{ voterCount - votesEntered }}</strong></span>
+                </div>
+                <p class="vote-result tie" *ngIf="votesOverLimit">
+                    ⚠ உள்ளிட்ட வாக்குகள் ({{ votesEntered }}) மொத்த வாக்காளர்களை ({{ voterCount }}) விட அதிகம்
+                </p>
+                <p class="vote-result pending" *ngIf="voterCount > 0 && votesEntered < voterCount">
+                    இன்னும் {{ voterCount - votesEntered }} வாக்குகள் உள்ளிட வேண்டும் — மொத்தம் {{ voterCount }} ஆக இருக்க வேண்டும்
+                </p>
+
+                <ng-container *ngFor="let cat of voteCategories">
+                    <div class="vote-group" *ngIf="candidatesIn(cat.key).length">
+                        <div class="vote-cat">{{ cat.label }}</div>
+                        <div class="vote-row" *ngFor="let c of candidatesIn(cat.key)"
+                            [class.vote-leader]="voteLeader.candidate?.form5_member_id === c.form5_member_id">
+                            <span class="vote-name">{{ c.member_name }} - {{ maskAadhar(c.aadhar_no) }}</span>
+                            <input type="number" class="vote-input" min="0" step="1"
+                                [(ngModel)]="c.votes_obtained" placeholder="வாக்குகள்">
+                        </div>
+                    </div>
+                </ng-container>
+
+                <p class="vote-result ok" *ngIf="voteLeader.candidate">
+                    ✔ அதிக வாக்குகள்: {{ voteLeader.candidate.member_name }} — துணைத் தலைவராக தேர்ந்தெடுக்கப்படுவார்
+                </p>
+                <p class="vote-result tie" *ngIf="voteLeader.tie">
+                    ⚠ அதிக வாக்குகள் சமமாக உள்ளன — வாக்குகளை சரிசெய்யவும்
+                </p>
 
             </div>
 
@@ -316,6 +439,35 @@
 
         </div>
 
+    </div>
+
+    <!-- ================================================= -->
+    <!-- STOP ELECTION MODAL — reason dropdown (same list as Form4/5b/7) -->
+    <!-- ================================================= -->
+
+    <div class="modal-backdrop" *ngIf="showStopModal">
+        <div class="modal-box">
+
+            <button class="close-btn" (click)="closeStop()">✕</button>
+
+            <h3>{{ stopSociety?.society_name }}</h3>
+
+            <h4>துணைத் தலைவர் தேர்தல் நிறுத்தப்பட்ட காரணம்</h4>
+
+            <select class="input-box" [(ngModel)]="stopReason">
+                <option value="">-- காரணத்தை தேர்வு செய்க --</option>
+                <option *ngFor="let r of reasonOptions" [value]="r.value">{{ r.label }}</option>
+            </select>
+
+            <textarea *ngIf="stopReason === 'other'" class="input-box stop-other" maxlength="555"
+                [(ngModel)]="stopOtherText" placeholder="இதர காரணத்தை உள்ளிடவும்"></textarea>
+
+            <div class="modal-footer">
+                <button class="cancel-btn" (click)="closeStop()">ரத்து</button>
+                <button class="submit-btn" (click)="submitStop()">சமர்ப்பிக்க</button>
+            </div>
+
+        </div>
     </div>
 
     <!-- ================================================= -->
@@ -335,7 +487,7 @@
                 {{ viewSociety?.society_name }}
             </h3>
 
-            <!-- ALL CANDIDATES — flat list, category shown inline -->
+            <!-- ALL CANDIDATES — flat list -->
             <div *ngIf="viewCandidates.length">
 
                 <h4>

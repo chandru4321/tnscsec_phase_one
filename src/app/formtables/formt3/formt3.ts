@@ -4,6 +4,22 @@ import { UserService } from '../../services/user';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
+// Stop reason codes (same as Form5B / Form7) → Tamil label
+const STOP_REASONS: Record<string, string> = {
+  legal_order: 'சட்ட ஒழுங்கு',
+  natural_disaster: 'இயற்கை பேரிடர்',
+  court_injunction: 'நீதிமன்ற தடையாணை',
+  election_cancelled_by_commission: 'ஆணையத்தால் தேர்தல் ரத்து',
+  insufficient_candidates: 'சிற்றெண் குறைவு',
+  other: 'இதர காரணங்கள்'
+};
+
+const stopReasonLabel = (soc: any): string => {
+  const label = STOP_REASONS[soc.stop_reason] || soc.stop_reason || '-';
+  return soc.stop_reason === 'other' && soc.stop_other_reason_text
+    ? `${label} - ${soc.stop_other_reason_text}` : label;
+};
+
 interface TableRow {
   district_name: string;
   zone_name: string;
@@ -21,6 +37,10 @@ interface TableRow {
   jcount: number;               // removed (நீக்கப்பட்ட)
   rcount: number;               // added (சேர்க்கப்பட்ட)
   total: number | null;         // final voter list count
+
+  // Election stopped at Form3 — name + reason
+  stopped_society_name: string;
+  stop_reason_display: string;
 
   rowSpan?: number;
 }
@@ -92,6 +112,8 @@ export class Formt3 implements OnInit {
           jcount: soc.jcount || 0,
           rcount: soc.rcount || 0,
           total: soc.total,
+          stopped_society_name: soc.is_stopped ? soc.society_name : '-',
+          stop_reason_display: soc.is_stopped ? stopReasonLabel(soc) : '-',
           rowSpan: index === 0 ? span : undefined
         });
       });

@@ -1,19 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MobileCardsDirective } from '../../shared/mobile-cards.directive';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { FilterByCategoryPipe } from '../../pipes/filter-by-category-pipe';
 import { Router, RouterOutlet } from '@angular/router';
 import { RouterModule } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-form6',
   standalone: true,
-  imports: [CommonModule, FormsModule, FilterByCategoryPipe,],
+  imports: [CommonModule, FormsModule, FilterByCategoryPipe, MobileCardsDirective],
   templateUrl: './form6.html',
   styleUrls: ['./form6.css']
 })
 export class Form6 implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   district_name = '';
   zone_name = '';
@@ -33,6 +42,20 @@ export class Form6 implements OnInit {
 
   selectedSociety: any = null;
   stopRemark = '';
+
+  // Stop reason — same choices as Form5B. Saved as readable text in the
+  // decision's remark, so the tables / PDFs that show it need no change.
+  stopReason = '';
+  stopOtherReasonText = '';
+
+  readonly reasonOptions = [
+    { value: 'legal_order', label: 'சட்ட ஒழுங்கு' },
+    { value: 'natural_disaster', label: 'இயற்கை பேரிடர்' },
+    { value: 'court_injunction', label: 'நீதிமன்ற தடையாணை' },
+    { value: 'election_cancelled_by_commission', label: 'ஆணையத்தால் தேர்தல் ரத்து' },
+    { value: 'insufficient_candidates', label: 'சிற்றெண் குறைவு' },
+    { value: 'other', label: 'இதர காரணங்கள்' }
+  ];
 
   // Captured once, when the popup opens — whether this society was
   // UNOPPOSED before any interaction (checkbox grid hidden, no choice to
@@ -82,9 +105,13 @@ export class Form6 implements OnInit {
         // Save for later use
         localStorage.setItem('form6_id', this.form6_id.toString());
 
-        // Now load editable data
-        this.loadPreview();
-        //this.loadEditableForm6();
+        // Already submitted → edit mode (built from the saved Form6);
+        // otherwise the normal draft flow from the preview
+        if (res.data.status === 'SUBMITTED') {
+          this.loadEditableForm6();
+        } else {
+          this.loadPreview();
+        }
       }
 
     });
@@ -98,30 +125,81 @@ export class Form6 implements OnInit {
       next: (res: any) => {
 
         this.editableData = res.data;
+        this.isEditMode = true;
+        this.form6_id = res.data.form6_id;
 
-        // Only enable edit mode if there are already withdrawn members
-        // this.isEditMode = res.data.societies.some((soc: any) =>
-        //   soc.election_status !== 'QUALIFIED'
-        // );
-        this.isEditMode = res.data.societies.some(
-          (soc: any) =>
-            soc.members.some((m: any) => m.withdrawn === true)
-        );
-
-        this.loadPreview();
+        this.buildFromEditable(res.data);
 
       },
 
-      error: () => {
+      error: (err: any) => {
+        // Locked (next form already submitted) → show it on the page
+        this.lockedMessage = lockedMessageFrom(err);
 
         this.isEditMode = false;
+        this.form6Submitted = true;   // nothing left to submit
 
-        this.initForm6();
+        this.loadPreview();
 
       }
 
     });
 
+  }
+
+  /* ================= EDIT MODE: BUILD PAGE FROM SAVED FORM6 ================= */
+  private buildFromEditable(data: any) {
+
+    const prepared = (data.societies || []).map((s: any) => {
+
+      const members = (s.members || []).map((m: any) => ({
+        ...m,
+        checked: m.withdrawn === true,
+        withdrawn: m.withdrawn === true
+      }));
+
+      const soc: any = {
+        form4_filed_soc_id: s.form4_filed_soc_id,
+        society_id: s.society_id,
+        society_name: s.society_name,
+        election_status: s.election_status,
+
+        rural_sc_st: +s.rural.sc_st,
+        rural_women: +s.rural.women,
+        rural_general: +s.rural.general,
+        rural_total: +s.rural.sc_st + +s.rural.women + +s.rural.general,
+
+        declared_sc_st: +s.declared.sc_st,
+        declared_women: +s.declared.women,
+        declared_general: +s.declared.general,
+        declared_total: +s.declared.sc_st + +s.declared.women + +s.declared.general,
+
+        rejectDone: false,
+        stopDone: s.election_action === 'STOP',
+
+        members
+      };
+
+      this.updateCounts(soc);
+      return soc;
+    });
+
+    this.f3Societies = JSON.parse(JSON.stringify(prepared));
+    this.f4Societies = prepared;
+
+    this.processedSocieties = prepared.filter((s: any) => this.getWithdrawnTotal(s) > 0);
+
+    const running = prepared.filter((s: any) => !s.stopDone);
+    const withCandidates = (s: any) => ({
+      ...s,
+      candidates: s.members
+        .filter((m: any) => !m.withdrawn)
+        .map((m: any) => ({ member_name: m.member_name, category_type: m.category_type }))
+    });
+
+    this.f5List = running.filter((s: any) => s.election_status === 'UNOPPOSED').map(withCandidates);
+    this.f6List = running.filter((s: any) => s.election_status === 'UNQUALIFIED').map(withCandidates);
+    this.f7List = running.filter((s: any) => s.election_status === 'QUALIFIED').map(withCandidates);
   }
   /* ================= PREVIEW ================= */
   loadPreview() {
@@ -184,35 +262,29 @@ export class Form6 implements OnInit {
 
   openRejectPopup(soc: any) {
 
-    if (this.isEditMode && this.editableData?.societies) {
+    if (this.isEditMode) {
 
-      const editableSoc = this.editableData.societies.find(
-        (x: any) =>
-          x.form4_filed_soc_id === soc.form4_filed_soc_id
-      );
-
-      if (editableSoc) {
-
-        this.selectedSociety = {
-          ...soc,
-          members: editableSoc.members.map((m: any) => ({
-            ...m,
-            checked: m.withdrawn === true,
-            withdrawn: m.withdrawn === true
-          }))
-        };
-
-      } else {
-
-        this.selectedSociety = soc;
+      if (soc.stopDone) {
+        this.dialog.show('இச்சங்கத்தில் தேர்தல் நிறுத்தப்பட்டுள்ளது');
+        return;
       }
+
+      // Work on a copy so closing the popup without saving changes nothing.
+      // Members withdrawn earlier come pre-ticked; un-tick to restore them.
+      this.selectedSociety = {
+        ...soc,
+        members: soc.members.map((m: any) => ({ ...m }))
+      };
+
+      // Always show the checkboxes in edit mode (never auto-pick members[0])
+      this.wasInitiallyUnopposed = false;
 
     } else {
 
       this.selectedSociety = soc;
+      this.wasInitiallyUnopposed = this.selectedSociety.election_status === 'UNOPPOSED';
     }
 
-    this.wasInitiallyUnopposed = this.selectedSociety.election_status === 'UNOPPOSED';
     this.showRejectPopup = true;
   }
   closeReject() {
@@ -228,6 +300,16 @@ export class Form6 implements OnInit {
 
   /* ================= SIMULATE ================= */
   onCheckboxChange() {
+
+    // Edit mode: the submitted Form6's withdrawn members are already
+    // inactive, so the server simulation can't see them — work it out here
+    if (this.isEditMode) {
+      this.selectedSociety.members.forEach((m: any) => (m.withdrawn = !!m.checked));
+      this.updateCounts(this.selectedSociety);
+      this.selectedSociety.election_status = this.computeElectionStatus(this.selectedSociety);
+      return;
+    }
+
     const ids = this.selectedSociety.members
       .filter((m: any) => m.checked)
       .map((m: any) => m.id);
@@ -268,6 +350,36 @@ export class Form6 implements OnInit {
   /* ================= FINAL WITHDRAW ================= */
   finalWithdraw() {
 
+    // ================= EDIT (submitted Form6) =================
+    // Sends this society's full ticked list; the server withdraws the newly
+    // ticked ones and restores the un-ticked ones. An empty list is allowed
+    // (it restores every withdrawal of this society).
+    if (this.isEditMode) {
+
+      const payload = {
+        form6_id: this.form6_id,
+        form4_filed_soc_id: this.selectedSociety.form4_filed_soc_id,
+        withdraw_member_ids: this.selectedSociety.members
+          .filter((m: any) => m.checked)
+          .map((m: any) => m.form5_member_id ?? m.id)
+      };
+
+      this.userService.editForm6(payload).subscribe({
+        next: (res: any) => {
+          if (res?.success) {
+            this.dialog.show('✔ Form6 Updated Successfully');
+            this.closeReject();
+            this.loadEditableForm6();
+          }
+        },
+        error: (err: any) => {
+          this.dialog.show(err?.error?.message || 'புதுப்பிக்க முடியவில்லை');
+        }
+      });
+
+      return;
+    }
+
     let membersToWithdraw: any[] = [];
 
     if (this.wasInitiallyUnopposed) {
@@ -286,72 +398,12 @@ export class Form6 implements OnInit {
 
     }
 
-    if (!membersToWithdraw.length) {
-      alert('தயவுசெய்து உறுப்பினரை தேர்வு செய்யவும்');
-      return;
-    }
-
-    // ================= EDIT =================
-
-    if (this.isEditMode) {
-      console.log('IS EDIT MODE =', this.isEditMode);
-      console.log('FORM6 ID =', this.form6_id);
-      console.log('SELECTED SOCIETY =', this.selectedSociety);
-
-
-      const payload = {
-
-
-        form6_id: this.form6_id,
-
-
-        candidate_events: membersToWithdraw.map((m: any) => ({
-
-          form4_filed_soc_id: this.selectedSociety.form4_filed_soc_id,
-
-          form5_member_id: m.form5_member_id ?? m.id,
-
-          event_type: 'WITHDRAW'
-
-        })),
-
-        societies: [
-
-          {
-
-            form4_filed_soc_id: this.selectedSociety.form4_filed_soc_id,
-
-            election_action: this.selectedSociety.election_status,
-
-            remarks: null
-
-          }
-
-        ]
-
-      };
-
-      console.log('EDIT PAYLOAD', payload);
-
-      this.userService.editForm6(payload).subscribe((res: any) => {
-
-        if (res.success) {
-
-          alert('✔ Form6 Updated Successfully');
-
-          this.closeReject();
-
-          this.loadEditableForm6();
-
-        }
-
-      });
-
-    }
+    // No one ticked = no withdrawals in this society; the submit below then
+    // just finalises its status from the current counts (no API call needed)
 
     // ================= FIRST SUBMIT =================
 
-    else {
+    {
 
       // Send one at a time — firing all of these in parallel meant each
       // withdrawForm6 response reflected whatever partial state the backend
@@ -372,6 +424,7 @@ export class Form6 implements OnInit {
 
           this.moveSocietyAfterSubmit(this.selectedSociety);
           this.closeReject();
+          this.dialog.show('✔ Form6 Submitted Successfully');
 
           return;
         }
@@ -386,10 +439,9 @@ export class Form6 implements OnInit {
 
           action: 'WITHDRAW'
 
-        }).subscribe(() => {
-
-          withdrawNext(index + 1);
-
+        }).subscribe({
+          next: () => withdrawNext(index + 1),
+          error: (err: any) => this.dialog.show(err?.error?.message || 'சமர்ப்பிக்க முடியவில்லை')
         });
       };
 
@@ -466,9 +518,21 @@ export class Form6 implements OnInit {
 
   /* ================= STOP ================= */
   openStopPopup(soc: any) {
+    if (soc.stopDone) return;
     this.selectedSociety = soc;
     this.stopRemark = '';
+    this.stopReason = '';
+    this.stopOtherReasonText = '';
     this.showStopPopup = true;
+  }
+
+  // Text saved as the remark: the reason label, or "இதர காரணங்கள் - <text>"
+  private buildStopRemark(): string | null {
+    const opt = this.reasonOptions.find(r => r.value === this.stopReason);
+    if (!opt) return null;
+    if (this.stopReason !== 'other') return opt.label;
+    const text = (this.stopOtherReasonText || '').trim();
+    return text ? `${opt.label} - ${text}` : null;
   }
 
   closeStop() {
@@ -477,16 +541,55 @@ export class Form6 implements OnInit {
   }
 
   submitStop() {
+
+    if (!this.stopReason) {
+      this.dialog.show('தேர்தல் நிறுத்துவதற்கான காரணத்தை தேர்வு செய்யவும்');
+      return;
+    }
+
+    const remark = this.buildStopRemark();
+    if (!remark) {
+      this.dialog.show('இதர காரணத்தை உள்ளிடவும்');
+      return;
+    }
+    this.stopRemark = remark;
+
+    // Edit mode: stop it on the submitted Form6 directly
+    if (this.isEditMode) {
+      this.userService.editForm6({
+        form6_id: this.form6_id,
+        form4_filed_soc_id: this.selectedSociety.form4_filed_soc_id,
+        action: 'STOP',
+        remark: this.stopRemark
+      }).subscribe({
+        next: (res: any) => {
+          if (res?.success) {
+            this.dialog.show('✔ Form6 Updated Successfully');
+            this.closeStop();
+            this.loadEditableForm6();
+          }
+        },
+        error: (err: any) => {
+          this.dialog.show(err?.error?.message || 'புதுப்பிக்க முடியவில்லை');
+        }
+      });
+      return;
+    }
+
     this.userService.stopElectionForm6({
       form6_id: this.form6_id,
       form4_filed_soc_id: this.selectedSociety.form4_filed_soc_id,
       action: 'STOP',
       remark: this.stopRemark
-    }).subscribe(res => {
-      if (res?.success) {
-        this.selectedSociety.stopDone = true;
-        this.closeStop();
-      }
+    }).subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          this.selectedSociety.stopDone = true;
+          this.closeStop();
+          this.dialog.show('✔ Form6 Submitted Successfully');
+        }
+      },
+      error: (err: any) => this.dialog.show(err?.error?.message || 'சமர்ப்பிக்க முடியவில்லை')
     });
   }
 
@@ -534,7 +637,7 @@ export class Form6 implements OnInit {
         this.form6Submitted = true;
         this.showFinalSubmitPopup = true;
 
-        alert('Form 6 submitted successfully');
+        this.dialog.show('Form 6 submitted successfully');
 
         this.router.navigate(['/layout/totalforms']);
       }

@@ -173,6 +173,9 @@
     border: none;
     margin: 0;
     padding: 0;
+    /* a fieldset defaults to min-width: min-content, which let the 1000px
+       programme table stretch the whole page on phones */
+    min-width: 0;
 }
 
 .es-table-scroll {
@@ -286,4 +289,37 @@
 
 .col-medium {
     width: 150px;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+    button,
+    a {
+        min-height: 40px;
+    }
+
+    .es-page {
+        padding: 16px 12px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .es-topbar {
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .es-topbar h2 {
+        font-size: 19px;
+    }
+
+    .es-section,
+    .es-table-scroll {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .es-section-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
 }

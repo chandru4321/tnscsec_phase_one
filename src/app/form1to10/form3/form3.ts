@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { Router, RouterOutlet } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-form3',
@@ -12,6 +14,12 @@ import { Router, RouterOutlet } from '@angular/router';
   styleUrls: ['./form3.css']
 })
 export class Form3 implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   district_name = '';
   zone_name = '';
@@ -59,6 +67,66 @@ export class Form3 implements OnInit {
 
   memberCounts: number[] = [];   // From API (readonly)
 
+  // Election stop per society (same reasons as Form5B / Form7). Saved with
+  // the Form3 submit; a stopped society is not carried into Form4.
+  stopMap: Record<number, { reason: string; otherText: string }> = {};
+  stopSociety: { society_id: number; society_name: string } | null = null;
+  stopReason = '';
+  stopOtherReasonText = '';
+
+  readonly reasonOptions = [
+    { value: 'legal_order', label: 'சட்ட ஒழுங்கு' },
+    { value: 'natural_disaster', label: 'இயற்கை பேரிடர்' },
+    { value: 'court_injunction', label: 'நீதிமன்ற தடையாணை' },
+    { value: 'election_cancelled_by_commission', label: 'ஆணையத்தால் தேர்தல் ரத்து' },
+    { value: 'insufficient_candidates', label: 'சிற்றெண் குறைவு' },
+    { value: 'other', label: 'இதர காரணங்கள்' }
+  ];
+
+  isStopped(societyId: number): boolean {
+    return !!this.stopMap[societyId]?.reason;
+  }
+
+  stopLabel(societyId: number): string {
+    const st = this.stopMap[societyId];
+    if (!st?.reason) return '';
+    const label = this.reasonOptions.find(r => r.value === st.reason)?.label || st.reason;
+    return st.reason === 'other' && st.otherText ? `${label} - ${st.otherText}` : label;
+  }
+
+  openStop(soc: { society_id: number; society_name: string }): void {
+    this.stopSociety = soc;
+    this.stopReason = this.stopMap[soc.society_id]?.reason || '';
+    this.stopOtherReasonText = this.stopMap[soc.society_id]?.otherText || '';
+  }
+
+  closeStop(): void {
+    this.stopSociety = null;
+  }
+
+  saveStop(): void {
+    if (!this.stopSociety) return;
+    if (!this.stopReason) {
+      this.dialog.show('தேர்தல் நிறுத்துவதற்கான காரணத்தை தேர்வு செய்யவும்');
+      return;
+    }
+    if (this.stopReason === 'other' && !this.stopOtherReasonText.trim()) {
+      this.dialog.show('இதர காரணத்தை உள்ளிடவும்');
+      return;
+    }
+    this.stopMap[this.stopSociety.society_id] = {
+      reason: this.stopReason,
+      otherText: this.stopReason === 'other' ? this.stopOtherReasonText.trim() : ''
+    };
+    this.closeStop();
+  }
+
+  // Undo a stop before the form is submitted
+  cancelStop(): void {
+    if (this.stopSociety) delete this.stopMap[this.stopSociety.society_id];
+    this.closeStop();
+  }
+
   constructor(private userService: UserService, private router: Router
 
   ) { }
@@ -93,9 +161,9 @@ export class Form3 implements OnInit {
 
         this.applyVoterListCounts();
       },
-      error: () => {
-        this.f3NonMemberSocietyList = [];
-      }
+      // Locked once Form3 exists — keep whatever the Form3 editable
+      // response already filled in rather than clearing it
+      error: () => { }
     });
   }
 
@@ -116,7 +184,11 @@ export class Form3 implements OnInit {
   // for any society that doesn't have an answer yet — never overwrites
   // an answer already entered/loaded for one.
   private rebuildAllSocieties(): void {
-    this.allSocietiesList = [...this.f3SocietyList, ...this.f3NonMemberSocietyList];
+    // One entry per society even if it turns up in both source lists
+    const unique = new Map<number, (typeof this.allSocietiesList)[number]>();
+    [...this.f3SocietyList, ...this.f3NonMemberSocietyList]
+      .forEach(soc => { if (!unique.has(soc.society_id)) unique.set(soc.society_id, soc); });
+    this.allSocietiesList = Array.from(unique.values());
 
     this.allSocietiesList.forEach(soc => {
       if (!(soc.society_id in this.f5AnswersMap)) this.f5AnswersMap[soc.society_id] = 'NO';
@@ -141,16 +213,42 @@ export class Form3 implements OnInit {
         const d = res.data;
 
         this.isEditMode = true;
-        this.form3Id = d.id;
+        this.form3Id = d.form3_id ?? d.id;
         this.form2_id = d.form2_id;
 
-        this.f3SocietyList = d.societies.map((s: any) => ({
-          society_id: s.society_id,
-          society_name: s.society_name,
-          voter_list_prepared_count: null
-        }));
+        // Form2 editable is locked once Form3 exists, so the voter-list
+        // counts (and the no-member-list societies) come with Form3 itself
+        // Form3 saves BOTH groups (F5–F7 cover all societies), so split the
+        // no-member-list ones back out — otherwise they'd be listed twice
+        const nonMemberIds = new Set<number>(
+          (d.non_selected_soc || []).map((s: any) => s.society_id));
+
+        this.f3SocietyList = d.societies
+          .filter((s: any) => !nonMemberIds.has(s.society_id))
+          .map((s: any) => ({
+            society_id: s.society_id,
+            society_name: s.society_name,
+            voter_list_prepared_count: s.voter_list_prepared_count ?? null
+          }));
 
         d.societies.forEach((s: any) => {
+          if (s.voter_list_prepared_count != null) {
+            this.voterListCountMap.set(s.society_id, s.voter_list_prepared_count);
+          }
+        });
+
+        if (d.non_selected_soc) {
+          this.f3NonMemberSocietyList = d.non_selected_soc.map((s: any) => ({
+            society_id: s.society_id,
+            society_name: s.society_name,
+            voter_list_prepared_count: s.voter_list_prepared_count ?? null
+          }));
+        }
+
+        d.societies.forEach((s: any) => {
+          if (s.is_stopped && s.stop_reason) {
+            this.stopMap[s.society_id] = { reason: s.stop_reason, otherText: s.stop_other_reason_text || '' };
+          }
           this.f5AnswersMap[s.society_id] = (s.ero_claim === 1 || s.ero_claim === 'yes') ? 'YES' : 'NO';
           this.removedCountsMap[s.society_id] = Number(s.jcount || 0);
           this.remainingCountsMap[s.society_id] = Number(s.rcount || 0);
@@ -159,7 +257,9 @@ export class Form3 implements OnInit {
         this.applyVoterListCounts();
       },
 
-      error: () => {
+      error: (err: any) => {
+        // Locked (next form already submitted) → show it on the page
+        this.lockedMessage = lockedMessageFrom(err);
 
         this.isEditMode = false;
 
@@ -247,7 +347,10 @@ export class Form3 implements OnInit {
         ero_claim: (this.f5AnswersMap[soc.society_id] || 'NO').toLowerCase(), // "yes" or "no"
         jcount: Number(this.removedCountsMap[soc.society_id] || 0),
         rcount: Number(this.remainingCountsMap[soc.society_id] || 0),
-        total
+        total,
+        stop_reason: this.stopMap[soc.society_id]?.reason || null,
+        stop_other_reason_text: this.stopMap[soc.society_id]?.reason === 'other'
+          ? this.stopMap[soc.society_id].otherText : null
       };
     });
 
@@ -260,13 +363,14 @@ export class Form3 implements OnInit {
     /* ===== EDIT MODE ===== */
     if (this.isEditMode) {
 
-      this.userService.editForm3(payload).subscribe((res: any) => {
+      // Edit API finds the record by form3_id and reads the list as "societies"
+      this.userService.editForm3({ ...payload, form3_id: this.form3Id, societies: society_entries }).subscribe((res: any) => {
 
         if (res.success) {
 
           localStorage.setItem('form3_completed', 'true');
 
-          alert('✔ Form3 Updated Successfully');
+          this.dialog.show('✔ Form3 Updated Successfully');
           this.router.navigate(['/layout/totalforms']);
         }
       });
@@ -283,7 +387,7 @@ export class Form3 implements OnInit {
           localStorage.setItem('form3_id', res.data.id);
           localStorage.setItem('form3_completed', 'true');
 
-          alert('✔ Form3 Submitted Successfully');
+          this.dialog.show('✔ Form3 Submitted Successfully');
           this.router.navigate(['/layout/totalforms']);
         }
       });

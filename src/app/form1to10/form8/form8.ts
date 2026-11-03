@@ -1,17 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MobileCardsDirective } from '../../shared/mobile-cards.directive';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { Router } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
     selector: 'app-form8',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, MobileCardsDirective],
     templateUrl: './form8.html',
     styleUrls: ['./form8.css']
 })
 export class Form8 implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
     district_name = '';
     Zone_name = '';
@@ -32,7 +41,61 @@ export class Form8 implements OnInit {
 showMembersPopup = false;    memberSections: { title: string; rows: { society_name: string; sc: string; women: string; general: string }[] }[] = [];
 
 
+    // Stop election at vote counting — same reasons as Form5B / Form7.
+    // Saved with the Form submit / update; a stopped society has no votes.
+    readonly reasonOptions = [
+        { value: 'legal_order', label: 'சட்ட ஒழுங்கு' },
+        { value: 'natural_disaster', label: 'இயற்கை பேரிடர்' },
+        { value: 'court_injunction', label: 'நீதிமன்ற தடையாணை' },
+        { value: 'election_cancelled_by_commission', label: 'ஆணையத்தால் தேர்தல் ரத்து' },
+        { value: 'insufficient_candidates', label: 'சிற்றெண் குறைவு' },
+        { value: 'other', label: 'இதர காரணங்கள்' }
+    ];
+    stopSociety: any = null;
+    stopReason = '';
+    stopOtherReasonText = '';
+
     constructor(private userService: UserService, private router: Router) { }
+
+    stopLabel(s: any): string {
+        if (!s?.stop_reason) return '';
+        const label = this.reasonOptions.find(r => r.value === s.stop_reason)?.label || s.stop_reason;
+        return s.stop_reason === 'other' && s.stop_other_reason_text ? `${label} - ${s.stop_other_reason_text}` : label;
+    }
+
+    openStop(s: any): void {
+        this.stopSociety = s;
+        this.stopReason = s.stop_reason || '';
+        this.stopOtherReasonText = s.stop_other_reason_text || '';
+    }
+
+    closeStop(): void {
+        this.stopSociety = null;
+    }
+
+    saveStop(): void {
+        if (!this.stopSociety) return;
+        if (!this.stopReason) {
+            this.dialog.show('தேர்தல் நிறுத்துவதற்கான காரணத்தை தேர்வு செய்யவும்');
+            return;
+        }
+        if (this.stopReason === 'other' && !this.stopOtherReasonText.trim()) {
+            this.dialog.show('இதர காரணத்தை உள்ளிடவும்');
+            return;
+        }
+        this.stopSociety.stop_reason = this.stopReason;
+        this.stopSociety.stop_other_reason_text = this.stopReason === 'other' ? this.stopOtherReasonText.trim() : null;
+        this.closeStop();
+    }
+
+    // Undo a stop before the form is saved
+    cancelStop(): void {
+        if (this.stopSociety) {
+            this.stopSociety.stop_reason = null;
+            this.stopSociety.stop_other_reason_text = null;
+        }
+        this.closeStop();
+    }
 
     ngOnInit(): void {
 
@@ -60,8 +123,10 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
 
                 this.isEditMode = (res.data.pollingDetails?.length || 0) > 0;
 
-                if (res.data.form8?.id) {
-                    this.form8_id = res.data.form8.id;
+                // The editable API returns the id as form8_id
+                const id = res.data?.form8_id ?? res.data?.form8?.id;
+                if (id) {
+                    this.form8_id = id;
                 }
                 console.log('EDIT MODE', this.isEditMode);
                 console.log('EDIT DATA', this.editableData);
@@ -70,7 +135,9 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
 
             },
 
-            error: () => {
+            error: (err: any) => {
+              // Locked (next form already submitted) → show it on the page
+              this.lockedMessage = lockedMessageFrom(err);
 
                 this.isEditMode = false;
 
@@ -151,6 +218,10 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
                         remarks:
                             polling?.remarks ?? '',
 
+                        // Election stopped at vote counting
+                        stop_reason: polling?.stop_reason ?? null,
+                        stop_other_reason_text: polling?.stop_other_reason_text ?? null,
+
                         selectedMembers: winners,
 
                         submitted: winners.length > 0
@@ -215,7 +286,7 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
 
         // Validation: valid cannot exceed ballot
         if (valid > ballot) {
-            alert('செல்லுபடியான வாக்குகள் மொத்த வாக்குகளை விட அதிகமாக இருக்க முடியாது');
+            this.dialog.show('செல்லுபடியான வாக்குகள் மொத்த வாக்குகளை விட அதிகமாக இருக்க முடியாது');
             s.valid_votes = ballot;
         }
 
@@ -228,17 +299,27 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
         }
     }
 
+    /* ================= VOTES ENTERED / REMAINING (Popup) ================= */
+    getTotalEnteredVotes(): number {
+        return this.memberCategories
+            .flatMap(cat => this.getMembers(cat.key))
+            .reduce((sum: number, m: any) => sum + (Number(m.votes_obtained) || 0), 0);
+    }
+
+    getRemainingVotes(): number {
+        const validVotes = Number(this.selectedSociety?.valid_votes) || 0;
+        return validVotes - this.getTotalEnteredVotes();
+    }
+
     /* ================= SAVE WINNERS (Popup Submit) ================= */
     submitPreview() {
 
-        const totalEntered = this.memberCategories
-            .flatMap(cat => this.getMembers(cat.key))
-            .reduce((sum: number, m: any) => sum + (Number(m.votes_obtained) || 0), 0);
+        const totalEntered = this.getTotalEnteredVotes();
 
         const validVotes = Number(this.selectedSociety.valid_votes) || 0;
 
         if (totalEntered !== validVotes) {
-            alert(
+            this.dialog.show(
                 `பெற்ற வாக்குகளின் கூடுதல் (${totalEntered}) செல்லுபடியான வாக்குகளின் எண்ணிக்கைக்கு (${validVotes}) சமமாக இல்லை`
             );
             return;
@@ -300,10 +381,10 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
 
                 soc.submitted = true;
                 this.closePreview();
-                alert('வெற்றிகரமாக சேமிக்கப்பட்டது');
+                this.dialog.show('வெற்றிகரமாக சேமிக்கப்பட்டது');
             },
             error: (err: any) => {
-                alert(err?.error?.message || 'சேமிக்க முடியவில்லை');
+                this.dialog.show(err?.error?.message || 'சேமிக்க முடியவில்லை');
             }
         });
     }
@@ -339,7 +420,11 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
 
                 },
 
-                candidates: this.buildCandidates(s)
+                // Stopped: no votes counted
+                stop_reason: s.stop_reason || null,
+                stop_other_reason_text: s.stop_reason === 'other' ? s.stop_other_reason_text : null,
+
+                candidates: s.stop_reason ? [] : this.buildCandidates(s)
 
             }))
 
@@ -351,17 +436,18 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
 
             this.userService.editForm8(payload).subscribe({
 
-                next: () => {
-
-                    alert('Form8 Updated Successfully');
+                next: (res: any) => {
+                    if (res?.success === false) {
+                        this.dialog.error(res?.message || 'திருத்தம் சேமிக்க முடியவில்லை');
+                        return;
+                    }
+                    this.dialog.show('Form8 Updated Successfully');
                     this.router.navigate(['/layout/totalforms']);
-
                 },
 
-                error: err => {
-
-                    console.log(err);
-
+                error: (err: any) => {
+                    console.error(err);
+                    this.dialog.error(err?.error?.message || 'திருத்தம் சேமிக்க முடியவில்லை');
                 }
 
             });
@@ -370,17 +456,18 @@ showMembersPopup = false;    memberSections: { title: string; rows: { society_na
 
             this.userService.submitForm8(payload).subscribe({
 
-                next: () => {
-
-                    alert('Form8 Submitted Successfully');
+                next: (res: any) => {
+                    if (res?.success === false) {
+                        this.dialog.error(res?.message || 'சமர்ப்பிக்க முடியவில்லை');
+                        return;
+                    }
+                    this.dialog.show('Form8 Submitted Successfully');
                     this.router.navigate(['/layout/totalforms']);
-
                 },
 
-                error: err => {
-
-                    console.log(err);
-
+                error: (err: any) => {
+                    console.error(err);
+                    this.dialog.error(err?.error?.message || 'சமர்ப்பிக்க முடியவில்லை');
                 }
 
             });

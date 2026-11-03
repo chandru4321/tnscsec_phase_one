@@ -204,7 +204,8 @@ export class table5b implements OnInit {
       dec_general: declared.general || 0,
       dec_total: declared.total || 0,
 
-      rejected_society_name: rejTotal > 0 ? (soc.society_name || '-') : '-',
+      // Every society is listed here, even with 0 rejections in all categories
+      rejected_society_name: soc.society_name || '-',
       rej_sc: rejSc,
       rej_women: rejWomen,
       rej_general: rejGeneral,
@@ -261,6 +262,7 @@ export class table5b implements OnInit {
     return {
       district_name: '',
       zone_name: '',
+      zone_count: 0,
       filedCount: 0,
       decSc: 0, decWomen: 0, decGeneral: 0, decTotal: 0,
       rejCount: 0,
@@ -284,7 +286,8 @@ export class table5b implements OnInit {
         groups.set(key, {
           ...this.emptyAbstractTotals(),
           district_name: r.district_name,
-          zone_name: r.zone_name
+          zone_name: r.zone_name,
+          zone_count: 1
         });
       }
 
@@ -332,6 +335,7 @@ export class table5b implements OnInit {
     const totals = this.emptyAbstractTotals();
 
     this.abstractRows.forEach((g: any) => {
+      totals.zone_count += g.zone_count;
       totals.filedCount += g.filedCount;
       totals.decSc += g.decSc;
       totals.decWomen += g.decWomen;

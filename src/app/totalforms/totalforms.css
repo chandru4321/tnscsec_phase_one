@@ -156,3 +156,80 @@
 .link a:hover {
   text-decoration: underline;
 }
+
+/* Shown in place of the form link */
+.no-submission {
+  color: #888;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* ================= MOBILE =================
+   On phones each row becomes a card: the title on its own line, then the
+   View button and the form link side by side underneath. */
+@media (max-width: 768px) {
+
+  .forms-container {
+    padding: 16px 12px 70px;   /* bottom room for the fixed footer */
+  }
+
+  .election-programme-bar {
+    justify-content: stretch;
+  }
+
+  .election-programme-bar a {
+    flex: 1;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  .forms-table,
+  .forms-table tbody,
+  .forms-table tr,
+  .forms-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .forms-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border-left: 5px solid #2e7d32;
+  }
+
+  .forms-table td {
+    padding: 0;
+    font-size: 15px;
+  }
+
+  .forms-table td.title {
+    flex: 1 1 100%;
+    border-left: none;
+  }
+
+  .forms-table td:not(.title) {
+    width: auto;
+  }
+
+  .link {
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .view-btn {
+    min-height: 40px;
+    padding: 8px 22px;
+    font-size: 15px;
+  }
+
+  .link a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+}

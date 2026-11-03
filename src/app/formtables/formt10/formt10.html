@@ -5,59 +5,10 @@
         </button>
     </div>
 
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 15 ({{ part }})</h2>
+
     <div class="table-scroll-wrapper">
-        <table class="report-table" id="reportTable">
-
-            <thead>
-
-                <!-- TITLE -->
-                <tr class="top-header">
-                    <th colspan="9">
-                        வேட்புமனு திரும்ப பெறுதல் மற்றும் இறுதி போட்டியிடும் வேட்பாளர்கள் பற்றிய முழு விவரங்கள்
-                    </th>
-                </tr>
-
-                <!-- DEPARTMENT -->
-                <tr class="top-sub-header">
-                    <th colspan="9">
-                        துறை --{{department_name}}
-                    </th>
-                </tr>
-
-                <!-- HEADER -->
-                <tr class="main-header">
-                    <th class="col-small">வ.எண்</th>
-                    <th class="col-medium">மாவட்ட தேர்தல் அலுவலர் மாவட்டம்/மண்டலம்</th>
-                    <th class="col-medium">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
-                    <th class="col-wide">வாக்குப்பதிவு நடைபெற்ற சங்கங்களின் பெயர்</th>
-                    <th class="col-wide">துணைத் தலைவர் பதவிக்கு தாக்கல் செய்யப்பட்ட வேட்பாளர்களின் பெயர்கள் - பார்வை</th>
-                    <th class="col-wide">பரிசீலனையில் நிராகரிக்கப்பட்ட வேட்பு மனுக்கள்/உறுப்பினர்கள் - பெயர்கள்</th>
-                    <th class="col-wide">திரும்பப் பெறப்பட்ட வேட்பு மனுக்கள்/உறுப்பினர்கள் - பெயர்கள்</th>
-                    <th class="col-wide">துணைத் தலைவர் பதவிக்கு தகுதியான இறுதி வேட்பாளர் பட்டியல்</th>
-                    <th class="col-medium">தேர்தல் முறை</th>
-                </tr>
-
-            </thead>
-
-            <tbody>
-                <tr *ngIf="tableRows.length === 0">
-                    <td colspan="9" class="empty-table-message">
-                        தயவுசெய்து முதலில் படிவம் 10-ஐ பூர்த்தி செய்யவும்.
-                    </td>
-                </tr>
-                <tr *ngFor="let r of tableRows; let i = index">
-                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ i + 1 }}</td>
-                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.district_name }}</td>
-                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.zone_name }}</td>
-                    <td class="text-left">{{ r.society_name }}</td>
-                    <td class="text-left">{{ r.filed_names }}</td>
-                    <td class="text-left">{{ r.rejected_names }}</td>
-                    <td class="text-left">{{ r.withdrawn_names }}</td>
-                    <td class="text-left">{{ r.eligible_names }}</td>
-                    <td>{{ r.election_type }}</td>
-                </tr>
-            </tbody>
-
-        </table>
+        <app-form14-table office="vice_president" [part]="part" [forms]="forms" [departmentName]="department_name"></app-form14-table>
     </div>
 </div>

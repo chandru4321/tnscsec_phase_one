@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 type CategoryType = 'sc_st' | 'women' | 'general';
 
@@ -12,6 +13,8 @@ interface Candidate {
   aadhar_no: string;
   category_type: CategoryType;
   is_elected: boolean;
+  // 14 (b): votes obtained in the president poll
+  votes_obtained?: number | null;
 }
 
 @Component({
@@ -23,6 +26,9 @@ interface Candidate {
 })
 export class Form9 implements OnInit {
 
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
   // Statuses that mean a candidate is no longer in the running.
   // Anything else (including null/undefined) is still active — the
   // preview API leaves status null until a candidate is actually
@@ -30,9 +36,13 @@ export class Form9 implements OnInit {
   private static readonly DECIDED_STATUSES = ['REJECTED', 'WITHDRAWN', 'LOST', 'ELECTED'];
 
   // ==========================================
-  // TABLES (see flow: F3 -> First selection -> Rejected(view)
-  //         -> F4 withdraw selection -> Withdrawn(view)
-  //         -> Final list -> Results)
+  // TABLES — படிவம் 14 flow:
+  //   14 (a): F3 (filed) -> First selection (reject) -> Rejected (view)
+  //           -> Withdrawal (who continues) -> Final list
+  //   14 (b): votes for each final candidate -> highest vote is President
+  //   One candidate left after scrutiny / withdrawal -> President UNOPPOSED.
+  // Any society not yet finalized can have its election stopped with a
+  // reason instead (column 10).
   // ==========================================
 
   // TABLE 1 — all filed members, view only
@@ -44,17 +54,34 @@ export class Form9 implements OnInit {
   // TABLE 3 — rejected societies, view only (society-level, automatic)
   rejectedSocietiesList: any[] = [];
 
-  // TABLE 4 — screened societies (>1 still contesting) that need a
-  // withdraw/continue decision before the final president pick
-  f4List: any[] = [];
-  showF4Table = false;
+  // 14 (a) col 8 — societies waiting for the withdrawal step
+  withdrawList: any[] = [];
 
-  // TABLE 5 — withdrawn societies, view only (society-level, automatic)
-  f4WithdrawnList: any[] = [];
-
-  // TABLE 6 — final eligible list; single-select the President here (POLL)
+  // 14 (b) — final list with more than one candidate: enter votes (POLL)
   f5List: any[] = [];
   showF5Table = false;
+
+  // Societies whose election can still be stopped (not finalized / stopped)
+  stoppableList: any[] = [];
+
+  // Societies whose president election was stopped, with the reason
+  stoppedList: any[] = [];
+
+  // Stop-election popup
+  showStopModal = false;
+  stopSociety: any = null;
+  stopReason = '';
+  stopOtherText = '';
+
+  // Same stop reasons as Form4 / Form5b / Form7
+  readonly reasonOptions = [
+    { value: 'legal_order', label: 'சட்ட ஒழுங்கு' },
+    { value: 'natural_disaster', label: 'இயற்கை பேரிடர்' },
+    { value: 'court_injunction', label: 'நீதிமன்ற தடையாணை' },
+    { value: 'election_cancelled_by_commission', label: 'ஆணையத்தால் தேர்தல் ரத்து' },
+    { value: 'insufficient_quorum', label: 'சிற்றெண் குறைவு' },
+    { value: 'other', label: 'இதர காரணங்கள்' }
+  ];
 
   // Societies already finalized (UNOPPOSED or POLL) this session
   finalizedSocieties = new Set<number>();
@@ -87,14 +114,36 @@ export class Form9 implements OnInit {
   // Action control
   currentAction: 'REJECT' | 'WITHDRAW' | 'FINALIZE' | null = null;
 
+  readonly voteCategories: { key: CategoryType; label: string }[] = [
+    { key: 'sc_st', label: 'ப.இ/பகு' },
+    { key: 'women', label: 'மகளிர்' },
+    { key: 'general', label: 'பொது' }
+  ];
+
   form9_id!: number;
 
-  constructor(private userService: UserService, private router: Router) { }
+  // The form is already SUBMITTED; it can be reopened for editing until
+  // the next form is submitted (can_edit from the preview API)
+  submittedCanEdit = false;
+
+  // 'a' = 14 (a) scrutiny / withdrawal, 'b' = 14 (b) votes / stop / submit
+  part: 'a' | 'b' = 'a';
+
+  constructor(private userService: UserService, private router: Router, private route: ActivatedRoute) { }
+
+  goToPart(part: 'a' | 'b'): void {
+    this.router.navigate(['/layout/form1to10', part === 'b' ? 'form9b' : 'form9']);
+  }
+
+  goBack(): void {
+    this.router.navigate(['/layout/totalforms']);
+  }
 
   // ======================
   // PAGE LOAD
   // ======================
   ngOnInit(): void {
+    this.part = this.route.snapshot.data?.['part'] === 'b' ? 'b' : 'a';
     this.district_name = localStorage.getItem('district_name') || '';
     this.zone_name = localStorage.getItem('zone_name') || '';
     this.callInitOnce();
@@ -141,26 +190,58 @@ export class Form9 implements OnInit {
     this.userService.getForm9Preview().subscribe({
       next: (res: any) => {
 
+        // Already submitted: show the "submitted" banner (Edit button when
+        // it can still be edited) instead of the entry steps
+        if (res?.success && res.data?.status === 'SUBMITTED') {
+          this.isFormSubmitted = true;
+          this.submittedCanEdit = !!res.data.can_edit;
+          this.form9_id = res.data.form9_id;
+          this.f3List = [];
+          this.firstSelectionList = [];
+          this.rejectedSocietiesList = [];
+          this.withdrawList = [];
+          this.f5List = [];
+          this.showF5Table = false;
+          this.stoppableList = [];
+          this.stoppedList = [];
+          this.finalizedResultsList = [];
+          return;
+        }
+
+        this.isFormSubmitted = false;
+
         if (!res?.success || !res.data?.societies) {
           this.f3List = [];
           this.firstSelectionList = [];
           this.rejectedSocietiesList = [];
-          this.f4List = [];
-          this.f4WithdrawnList = [];
+          this.withdrawList = [];
           this.f5List = [];
-          this.showF4Table = false;
           this.showF5Table = false;
+          this.stoppableList = [];
+          this.stoppedList = [];
           return;
         }
 
         const societies = res.data.societies || [];
 
         // Only societies that actually have members filed
-        const validSocieties = societies.filter(
+        const filedSocieties = societies.filter(
           (soc: any) =>
             Array.isArray(soc.candidates) &&
             soc.candidates.length > 0
         );
+
+        // Stopped societies leave the entry steps; they are listed with
+        // their reason instead (column 10).
+        this.stoppedList = filedSocieties
+          .filter((soc: any) => soc.is_stopped)
+          .map((soc: any) => ({
+            form9_society_id: soc.form9_society_id,
+            society_name: soc.society_name,
+            reason: soc.stop_reason_label || '-'
+          }));
+
+        const validSocieties = filedSocieties.filter((soc: any) => !soc.is_stopped);
 
         this.district_name = res.data.district_name;
         this.zone_name = res.data.zone_name;
@@ -186,11 +267,8 @@ export class Form9 implements OnInit {
         const table4 = (soc: any): any[] =>
           soc.table4_candidates || this.contestingCandidates(soc);
 
-        const table5 = (soc: any): any[] =>
-          soc.table5_candidates ||
-          soc.withdrawn_members?.all ||
-          (soc.candidates || []).filter((c: any) => c.status === 'WITHDRAWN');
-
+        // Final candidates — everyone who continued after scrutiny and did
+        // not withdraw (TABLE 6)
         const table6 = (soc: any): any[] =>
           soc.table6_candidates || table4(soc);
 
@@ -206,11 +284,6 @@ export class Form9 implements OnInit {
           const total = (soc.candidates || []).length;
           return this.contestingCandidates(soc).length < total;
         };
-
-        // A society has completed TABLE 4 (withdraw) once it has any
-        // withdrawn member.
-        const hasCompletedWithdrawStep = (soc: any): boolean =>
-          table5(soc).length > 0 || (soc.withdrawn_counts?.total ?? 0) > 0;
 
         // ==========================================
         // TABLE 1 — ALL FILED MEMBERS (view only)
@@ -244,78 +317,63 @@ export class Form9 implements OnInit {
             candidates: table3(soc)
           }));
 
-        // ==========================================
-        // TABLE 4 — WITHDRAW SELECTION
-        //
-        // Screened societies (TABLE 2 done) with MORE THAN ONE
-        // candidate still contesting, not yet through the withdraw
-        // step, and not finalized. A single surviving candidate after
-        // TABLE 2 skips straight to auto-UNOPPOSED (below) and never
-        // needs a TABLE 4 step.
-        // ==========================================
-
+        // Screened (TABLE 2 done) and not yet finalized
         const afterFirstSelection = validSocieties.filter((soc: any) =>
           hasCompletedFirstSelection(soc) &&
           !this.isSocietyFinalized(soc, Number(soc.form9_society_id))
         );
 
-        this.f4List = afterFirstSelection
-          .filter((soc: any) => !hasCompletedWithdrawStep(soc))
-          .map((soc: any) => ({
-            form9_society_id: soc.form9_society_id,
-            society_name: soc.society_name,
-            total: table4(soc).length,
-            candidates: table4(soc)
-          }))
-          .filter((row: any) => row.total > 1);
-
-        this.showF4Table = this.f4List.length > 0;
-
         // ==========================================
-        // AUTO-FINALIZE — exactly one candidate left, right
-        // after TABLE 2 or right after TABLE 4, becomes President
-        // UNOPPOSED with no extra selection step.
+        // AUTO-FINALIZE — exactly one candidate left after TABLE 2
+        // becomes President UNOPPOSED (போட்டியில்லாதது) with no
+        // extra selection step.
         // ==========================================
 
         afterFirstSelection
-          .filter((soc: any) => !hasCompletedWithdrawStep(soc) && table4(soc).length === 1)
-          .forEach((soc: any) => this.autoFinalizeUnopposed(soc, table4(soc)[0]));
-
-        afterFirstSelection
-          .filter((soc: any) => hasCompletedWithdrawStep(soc) && table6(soc).length === 1)
+          .filter((soc: any) => table6(soc).length === 1)
           .forEach((soc: any) => this.autoFinalizeUnopposed(soc, table6(soc)[0]));
 
         // ==========================================
-        // TABLE 5 — WITHDRAWN, view only, society-level
+        // 14 (a) col 8 — WITHDRAWAL: screened, more than one candidate
+        // continuing, withdrawal step not done yet
         // ==========================================
 
-        this.f4WithdrawnList = validSocieties
-          .filter((soc: any) => table5(soc).length > 0)
+        this.withdrawList = afterFirstSelection
+          .filter((soc: any) => !soc.withdraw_done && table4(soc).length > 1)
           .map((soc: any) => ({
             form9_society_id: soc.form9_society_id,
             society_name: soc.society_name,
-            candidates: table5(soc)
+            candidates: table4(soc)
           }));
 
         // ==========================================
-        // TABLE 6 — FINAL ELIGIBLE LIST (President selection, POLL)
+        // 14 (b) — FINAL LIST, VOTES (POLL)
         //
-        // Societies that have gone through the withdraw step and
-        // are not yet finalized. Candidates shown are whoever is
-        // still contesting after withdrawal.
+        // Withdrawal done and more than one candidate still contesting,
+        // not yet finalized.
         // ==========================================
 
         this.f5List = afterFirstSelection
-          .filter((soc: any) => hasCompletedWithdrawStep(soc))
+          .filter((soc: any) => soc.withdraw_done)
           .map((soc: any) => ({
             form9_society_id: soc.form9_society_id,
             society_name: soc.society_name,
             total: table6(soc).length,
+            // Voters = the society's board members (everyone filed in TABLE 1)
+            voter_count: table1(soc).length,
             candidates: table6(soc)
           }))
           .filter((row: any) => row.total > 1);
 
         this.showF5Table = this.f5List.length > 0;
+
+        // Any society not yet finalized can still be stopped
+        this.stoppableList = validSocieties
+          .filter((soc: any) => !this.isSocietyFinalized(soc, Number(soc.form9_society_id)))
+          .map((soc: any) => ({
+            form9_society_id: soc.form9_society_id,
+            society_name: soc.society_name
+          }));
 
         // ==========================================
         // TABLE 7 — FINALIZED RESULTS — hydrate from backend
@@ -457,9 +515,10 @@ export class Form9 implements OnInit {
       member_name: c.member_name,
       aadhar_no: c.aadhar_no,
       category_type: c.category_type,
-      // REJECT/WITHDRAW modals: checked = continue.
-      // FINALIZE modal: unused (checkbox drives selectedPresidentId instead).
-      is_elected: false
+      // REJECT / WITHDRAW modal: checked = continue (WITHDRAW starts all ticked).
+      // FINALIZE modal: unused — the votes decide the President.
+      is_elected: action === 'WITHDRAW',
+      votes_obtained: c.votes_obtained ?? null
     }));
 
     this.showModal = true;
@@ -479,12 +538,152 @@ export class Form9 implements OnInit {
     this.selectedPresidentId = candidate.form5_member_id;
   }
 
+  // 14 (b) — candidates of one category in the votes popup
+  candidatesIn(cat: CategoryType): Candidate[] {
+    return this.candidates.filter(c => c.category_type === cat);
+  }
+
+  private hasVote(c: Candidate): boolean {
+    const v: any = c.votes_obtained;
+    return v !== null && v !== undefined && v !== '' && Number.isInteger(Number(v)) && Number(v) >= 0;
+  }
+
+  // Board members who vote in the president election (TABLE 1 count)
+  get voterCount(): number {
+    return Number(this.selectedSociety?.voter_count) || 0;
+  }
+
+  get votesEntered(): number {
+    return this.candidates.reduce((t, c) => t + (this.hasVote(c) ? Number(c.votes_obtained) : 0), 0);
+  }
+
+  get votesOverLimit(): boolean {
+    return this.voterCount > 0 && this.votesEntered > this.voterCount;
+  }
+
+  // Votes must tally exactly with the voters before submitting
+  get votesTally(): boolean {
+    return this.voterCount > 0 && this.votesEntered === this.voterCount;
+  }
+
+  // Leader by votes so far: the winner, a tie, or not all votes entered yet
+  get voteLeader(): { candidate: Candidate | null; tie: boolean; complete: boolean } {
+    const complete = this.candidates.length > 0 && this.candidates.every(c => this.hasVote(c));
+    if (!complete) return { candidate: null, tie: false, complete };
+    const highest = Math.max(...this.candidates.map(c => Number(c.votes_obtained)));
+    const top = this.candidates.filter(c => Number(c.votes_obtained) === highest);
+    return { candidate: top.length === 1 ? top[0] : null, tie: top.length > 1, complete };
+  }
+
   maskAadhar(aadhar: string): string {
     return aadhar ? 'xxxx xxxx ' + aadhar.slice(-4) : '';
   }
 
+  // (7) தேர்தல் முறை in Tamil
+  electionTypeLabel(type: string | null | undefined): string {
+    if (type === 'UNOPPOSED') return 'போட்டியில்லாதது';
+    if (type === 'POLL') return 'போட்டி';
+    return '-';
+  }
+
   // ======================
-  // SUBMIT (REJECT / WITHDRAW / FINALIZE)
+  // STOP / RESUME a society's president election (column 10)
+  // ======================
+  openStop(row: any): void {
+    this.stopSociety = row;
+    this.stopReason = '';
+    this.stopOtherText = '';
+    this.showStopModal = true;
+  }
+
+  closeStop(): void {
+    this.showStopModal = false;
+    this.stopSociety = null;
+  }
+
+  submitStop(): void {
+    if (!this.stopSociety) return;
+
+    if (!this.stopReason) {
+      this.dialog.show('காரணத்தை தேர்வு செய்யவும்');
+      return;
+    }
+
+    if (this.stopReason === 'other' && !this.stopOtherText.trim()) {
+      this.dialog.show('இதர காரணத்தை உள்ளிடவும்');
+      return;
+    }
+
+    this.userService.form9stop({
+      form9_society_id: Number(this.stopSociety.form9_society_id),
+      stop_reason: this.stopReason,
+      stop_other_reason_text: this.stopReason === 'other' ? this.stopOtherText.trim() : ''
+    }).subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          this.dialog.show('தேர்தல் நிறுத்தப்பட்டது');
+          this.closeStop();
+          this.loadPreview();
+        }
+      },
+      error: err => this.dialog.show(err?.error?.message || 'Stop failed')
+    });
+  }
+
+  // ======================
+  // EDIT a submitted form / a finalized society
+  // ======================
+
+  // Reopen the submitted form as a draft so it can be edited
+  editSubmittedForm(): void {
+    if (!confirm('சமர்ப்பிக்கப்பட்ட படிவத்தை திருத்தவா?')) return;
+
+    this.userService.form9reopen().subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          this.isFormSubmitted = false;
+          this.finalizedSocieties.clear();
+          this.finalizedResultsList = [];
+          this.callInitOnce();
+        }
+      },
+      error: err => this.dialog.show(err?.error?.message || 'Edit failed')
+    });
+  }
+
+  // Send one finalized / stopped society back to step 1 to enter it again
+  resetSociety(row: any): void {
+    if (!confirm(`${row.society_name} — மீண்டும் உள்ளீடு செய்யவா?`)) return;
+
+    const societyId = Number(row.form9_society_id);
+
+    this.userService.form9societyreset({ form9_society_id: societyId }).subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          this.finalizedSocieties.delete(societyId);
+          this.finalizedResultsList = this.finalizedResultsList.filter(
+            (item: any) => Number(item.form9_society_id) !== societyId
+          );
+          this.loadPreview();
+        }
+      },
+      error: err => this.dialog.show(err?.error?.message || 'Reset failed')
+    });
+  }
+
+  resumeElection(row: any): void {
+    if (!confirm(`${row.society_name} — தேர்தலை மீண்டும் தொடங்கவா?`)) return;
+
+    this.userService.form9resume({ form9_society_id: Number(row.form9_society_id) }).subscribe({
+      next: (res: any) => {
+        if (res?.success) this.loadPreview();
+      },
+      error: err => this.dialog.show(err?.error?.message || 'Resume failed')
+    });
+  }
+
+  // ======================
+  // SUBMIT (REJECT / FINALIZE)
   // ======================
 
   submitModal(): void {
@@ -496,15 +695,35 @@ export class Form9 implements OnInit {
     // ==========================
     if (this.currentAction === 'FINALIZE') {
 
-      if (!this.selectedPresidentId) {
-        alert('ஒரு உறுப்பினரை தேர்வு செய்யவும்');
+      if (!this.candidates.every(c => this.hasVote(c))) {
+        this.dialog.show('அனைத்து வேட்பாளர்களுக்கும் பெற்ற வாக்குகளை உள்ளிடவும்');
         return;
       }
+
+      if (!this.votesTally) {
+        this.dialog.show(
+          `பெற்ற வாக்குகளின் கூடுதல் (${this.votesEntered}) மொத்த வாக்காளர்களுக்கு (${this.voterCount}) சமமாக இருக்க வேண்டும்`
+        );
+        return;
+      }
+
+      const leader = this.voteLeader;
+      if (leader.tie || !leader.candidate) {
+        this.dialog.show('அதிக வாக்குகள் சமமாக உள்ளன — வாக்குகளை சரிசெய்யவும்');
+        return;
+      }
+
+      // Highest vote wins (the backend checks the same)
+      this.selectedPresidentId = leader.candidate.form5_member_id;
 
       const payload = {
         form9_society_id: this.selectedSociety.form9_society_id,
         election_type: 'POLL',
-        president_form5_candidate_id: this.selectedPresidentId
+        president_form5_candidate_id: this.selectedPresidentId,
+        votes: this.candidates.map(c => ({
+          form5_member_id: c.form5_member_id,
+          votes_obtained: Number(c.votes_obtained)
+        }))
       };
 
       this.userService.form9societyfinalize(payload).subscribe({
@@ -512,16 +731,20 @@ export class Form9 implements OnInit {
 
           if (res?.success) {
 
-            alert('Society Finalized');
+            this.dialog.show('சேமிக்கப்பட்டது — அதிக வாக்குகள் பெற்றவர் தலைவர்');
 
             const societyId = Number(this.selectedSociety.form9_society_id);
 
             this.finalizedSocieties.add(societyId);
 
-            const row = this.f5List.find(
-              (item: any) => Number(item.form9_society_id) === societyId
+            // Finalized: no longer waiting for votes or stoppable
+            this.f5List = this.f5List.filter(
+              (item: any) => Number(item.form9_society_id) !== societyId
             );
-            if (row) row.submitted = true;
+            this.showF5Table = this.f5List.length > 0;
+            this.stoppableList = this.stoppableList.filter(
+              (item: any) => Number(item.form9_society_id) !== societyId
+            );
 
             const president = this.candidates.find(
               c => c.form5_member_id === this.selectedPresidentId
@@ -529,49 +752,45 @@ export class Form9 implements OnInit {
 
             this.pushFinalizedResult(societyId, this.selectedSociety.society_name, president, 'POLL');
 
-            // Close modal only — DON'T call loadPreview()
             this.closeModal();
+
+            // Refresh from the backend so every list matches the saved state
+            this.loadPreview();
           }
         },
-        error: err => alert(err?.error?.message || 'Finalize failed')
+        error: err => this.dialog.show(err?.error?.message || 'Finalize failed')
       });
 
       return;
     }
 
     // ==========================
-    // TABLE 4 → WITHDRAW
-    //
-    // CHECKED   = candidate continues to TABLE 6
-    // UNCHECKED = candidate is withdrawn
-    //
-    // The backend's candidates[] payload is the KEEP list — anyone
-    // NOT included gets marked WITHDRAWN automatically. So we send
-    // the checked (continuing) candidates, not the unchecked ones.
+    // 14 (a) col 8 → WITHDRAW
+    // CHECKED = continues, UNCHECKED = withdrew. One left → UNOPPOSED.
     // ==========================
     if (this.currentAction === 'WITHDRAW') {
 
-      const continuing = this.candidates.filter(c => c.is_elected);
+      const staying = this.candidates.filter(c => c.is_elected);
 
-      if (continuing.length === 0) {
-        alert('குறைந்தது ஒரு உறுப்பினரையாவது தொடர தேர்வு செய்யவும்');
+      if (staying.length === 0) {
+        this.dialog.show('குறைந்தது ஒரு உறுப்பினரையாவது தொடர தேர்வு செய்யவும்');
         return;
       }
 
-      const payload = {
+      this.userService.form9withdraw({
         form9_society_id: this.selectedSociety.form9_society_id,
-        candidates: continuing.map(c => ({ form5_member_id: c.form5_member_id }))
-      };
-
-      this.userService.form9withdraw(payload).subscribe({
+        candidates: staying.map(c => ({ form5_member_id: c.form5_member_id }))
+      }).subscribe({
         next: (res: any) => {
           if (res?.success) {
-            alert('சேமிக்கப்பட்டது');
+            this.dialog.show(staying.length === 1
+              ? 'சேமிக்கப்பட்டது — போட்டியின்றி தலைவர் தேர்வு'
+              : 'சேமிக்கப்பட்டது');
             this.closeModal();
             this.loadPreview();
           }
         },
-        error: err => alert(err?.error?.message || 'API error')
+        error: err => this.dialog.show(err?.error?.message || 'API error')
       });
 
       return;
@@ -580,7 +799,7 @@ export class Form9 implements OnInit {
     // ==========================
     // TABLE 2 → REJECT
     //
-    // CHECKED   = candidate continues to TABLE 4/UNOPPOSED
+    // CHECKED   = candidate continues to TABLE 6/UNOPPOSED
     // UNCHECKED = candidate is rejected
     //
     // The backend's candidates[] payload is the KEEP list — anyone
@@ -591,7 +810,7 @@ export class Form9 implements OnInit {
     const continuing = this.candidates.filter(c => c.is_elected);
 
     if (continuing.length === 0) {
-      alert('குறைந்தது ஒரு உறுப்பினரையாவது தொடர தேர்வு செய்யவும்');
+      this.dialog.show('குறைந்தது ஒரு உறுப்பினரையாவது தொடர தேர்வு செய்யவும்');
       return;
     }
 
@@ -603,12 +822,12 @@ export class Form9 implements OnInit {
     this.userService.form9reject(payload).subscribe({
       next: (res: any) => {
         if (res?.success) {
-          alert('சேமிக்கப்பட்டது');
+          this.dialog.show('சேமிக்கப்பட்டது');
           this.closeModal();
           this.loadPreview();
         }
       },
-      error: err => alert(err?.error?.message || 'API error')
+      error: err => this.dialog.show(err?.error?.message || 'API error')
     });
   }
 
@@ -625,13 +844,14 @@ export class Form9 implements OnInit {
     // was missed.
     // ==========================================
 
+    // Stopped societies are complete (they have a reason instead)
     const pendingCount =
       this.firstSelectionList.length +
-      this.f4List.length +
+      this.withdrawList.length +
       this.f5List.filter((row: any) => !row.submitted).length;
 
     if (pendingCount > 0) {
-      alert(`${pendingCount} சங்கங்கள் இன்னும் இறுதி செய்யப்படவில்லை.`);
+      this.dialog.show(`${pendingCount} சங்கங்கள் இன்னும் இறுதி செய்யப்படவில்லை.`);
       return;
     }
 
@@ -642,12 +862,12 @@ export class Form9 implements OnInit {
     this.userService.form9submit(payload).subscribe({
       next: (res: any) => {
         if (res?.success) {
-          alert('Form9 Submitted Successfully');
+          this.dialog.show('Form9 Submitted Successfully');
           this.isFormSubmitted = true;
           this.router.navigate(['/layout/totalforms']);
         }
       },
-      error: err => alert(err?.error?.message || 'Submit failed')
+      error: err => this.dialog.show(err?.error?.message || 'Submit failed')
     });
   }
 }

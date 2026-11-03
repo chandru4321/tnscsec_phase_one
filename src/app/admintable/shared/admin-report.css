@@ -1,0 +1,360 @@
+/* Shared styles for the Form8 / Form10 / Form11 / Form12 admin pages
+   (filter bar, buttons and the Full List table). Same look as table6. */
+
+:host {
+    display: block;
+}
+
+/* Fill the viewport under the sticky header and above the fixed footer so
+   the table box — not the page — is what scrolls (both axes). */
+.page-content {
+    position: fixed;
+    top: 90px;
+    bottom: 48px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f3f4f6;
+    padding: 0 16px 8px;
+}
+
+app-report-actions,
+.form-heading,
+.table-source {
+    flex-shrink: 0;
+}
+
+app-abstract-table {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== ACTION BAR ===== */
+
+.table-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 15px;
+    background: #fff;
+    border-bottom: 1px solid #dcdcdc;
+}
+
+.filter-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-item label {
+    font-weight: 600;
+}
+
+.filter-item select {
+    min-width: 200px;
+    padding: 6px 10px;
+    border: 1px solid #bdbdbd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.view-toggle-btn {
+    font-weight: 600;
+    background: #dbeafe;
+    padding: 8px 16px;
+    border: 1px solid #1a73e8;
+    cursor: pointer;
+}
+
+.view-toggle-btn:hover {
+    background: #bfdbfe;
+}
+
+.export-btn {
+    padding: 9px 18px;
+    border: 1px solid #4d7c0f;
+    background: #e5f7e5;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.export-btn:hover {
+    background: #cfeccc;
+}
+
+/* ===== FULL LIST TABLE ===== */
+
+.table-scroll-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    overflow: auto;
+    border: 1px solid #4d7c0f;
+    background: #fff;
+}
+
+.report-table {
+    width: max-content;
+    min-width: 2600px;
+    border-collapse: collapse;
+    font-family: "Noto Sans Tamil", sans-serif;
+    font-size: 14px;
+}
+
+.report-table.names-table {
+    min-width: 2800px;
+}
+
+.report-table th,
+.report-table td {
+    border: 1px solid #4d7c0f;
+    padding: 6px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.top-header th {
+    background: #b7e3a1;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.top-sub-header th {
+    background: #c6efb3;
+    text-align: left;
+}
+
+.main-header th {
+    background: #61b9c0;
+    color: #fff;
+    line-height: 1.3;
+}
+
+.sub-header th {
+    background: #9fd38a;
+    font-size: 13px;
+}
+
+.col-number-cell {
+    background: #fde68a;
+    color: #78350f;
+    font-weight: 700;
+    padding: 4px 8px;
+}
+
+.text-left {
+    text-align: left !important;
+}
+
+.names-cell {
+    min-width: 160px;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.empty-table-message {
+    padding: 20px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #d32f2f;
+    background: #fff;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+    .filter-section select,
+    .filter-item select,
+    select {
+        min-height: 40px;
+        width: 100%;
+    }
+
+    .view-toggle-btn,
+    .export-btn,
+    .action-btn {
+        min-height: 40px;
+        width: 100%;
+    }
+}
+
+
+/* ===== Filter / action bar — same layout as admin Form 1 =====
+   Filters (label + dropdown together) on the left, buttons on the right;
+   stacked full width on phones. Appended last so it wins over older rules. */
+.table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    height: auto;
+    margin: 10px 0;
+    padding: 10px 14px;
+    background: #fff;
+    border-bottom: 1px solid #dcdcdc;
+}
+
+.table-actions .filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+    margin: 0;
+}
+
+.table-actions .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.table-actions .filter-item label {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.table-actions .filter-item select {
+    width: 240px;
+    min-width: 0;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 14px;
+}
+
+.table-actions .action-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.table-actions .action-group button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .table-actions,
+    .table-actions .filter-section,
+    .table-actions .action-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .table-actions .filter-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+
+    .table-actions .filter-item select {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .table-actions .action-group button {
+        width: 100%;
+        min-height: 40px;
+        white-space: normal;
+    }
+}
+
+/* same button colours on every admin page (as admin Form 1):
+   Abstract ⇄ Full List = blue, Download PDF = green */
+.table-actions .action-group .view-toggle-btn {
+    background: #dbeafe;
+    border: 1px solid #1a73e8;
+    color: #111;
+}
+
+.table-actions .action-group .view-toggle-btn:hover {
+    background: #bfdbfe;
+}
+
+.table-actions .action-group button:not(.view-toggle-btn) {
+    background: #e5f7e5;
+    border: 1px solid #4d7c0f;
+    color: #111;
+}
+
+.table-actions .action-group button:not(.view-toggle-btn):hover {
+    background: #cfeccc;
+}
+
+/* ===== Table box — always-visible scrollbars (as admin Form 1) ===== */
+.table-scroll-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    overflow: auto;
+    scrollbar-width: auto;
+    scrollbar-color: #4d7c0f #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+    height: 14px;
+    width: 14px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+    background: #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #4d7c0f;
+    border-radius: 7px;
+    border: 2px solid #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #3f6212;
+}
+
+/* phones: keep an on-screen table box with its own scrollbars */
+@media (max-width: 768px) {
+    .page-content {
+        top: 70px;
+        bottom: 48px;
+        padding: 0 8px 8px;
+    }
+
+    .table-scroll-wrapper {
+        min-height: 0;
+    }
+
+    .report-table {
+        min-width: 1800px;
+    }
+}

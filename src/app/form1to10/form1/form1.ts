@@ -368,10 +368,12 @@
 // }
 
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { Router, ActivatedRoute } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-form1',
@@ -381,6 +383,12 @@ import { Router, ActivatedRoute } from '@angular/router';
   styleUrls: ['./form1.css']
 })
 export class Form1 implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   // ================= BASIC DETAILS =================
 
@@ -414,6 +422,7 @@ export class Form1 implements OnInit {
   // ================= RURAL DETAILS =================
 
   ruralDetails: {
+    id?: number;     // society id — counts are matched to societies by this
     name: string;
     sc: number;
     women: number;
@@ -827,6 +836,9 @@ export class Form1 implements OnInit {
                   (d.selected_soc || [])
                     .map((s: any) => ({
 
+                      id:
+                        Number(s.society_id),
+
                       name:
                         s.society_name,
 
@@ -882,7 +894,7 @@ export class Form1 implements OnInit {
 
               },
 
-              error: (err) => {
+              error: (err: any) => {
 
                 console.error(
                   'Master Zones Edit Error:',
@@ -899,7 +911,10 @@ export class Form1 implements OnInit {
         // ERROR
         // ======================================================
 
-        error: (err) => {
+        error: (err: any) => {
+
+          // Locked (next form already submitted) → show it on the page
+          this.lockedMessage = lockedMessageFrom(err);
 
           console.error(
             'Editable Form1 API Error:',
@@ -1134,6 +1149,8 @@ export class Form1 implements OnInit {
 
               this.ruralDetails.push({
 
+                id: id,
+
                 name: name,
 
                 sc: sc,
@@ -1251,11 +1268,12 @@ export class Form1 implements OnInit {
           .filter(x => x.selected)
           .map(z => {
 
+            // Match by society id (names can differ slightly between the
+            // master list and saved data, which used to save 0 counts);
+            // fall back to the name for rows without an id.
             const r =
-              this.ruralDetails
-                .find(
-                  t => t.name === z.name
-                );
+              this.ruralDetails.find(t => t.id === z.id) ??
+              this.ruralDetails.find(t => t.name === z.name);
 
             const sc =
               r?.sc ?? 0;
@@ -1322,7 +1340,7 @@ export class Form1 implements OnInit {
 
       if (!this.form1Id) {
 
-        alert(
+        this.dialog.show(
           'Form1 ID is missing'
         );
 
@@ -1357,7 +1375,7 @@ export class Form1 implements OnInit {
               'true'
             );
 
-            alert(
+            this.dialog.show(
               '✔ Form Updated Successfully'
             );
 
@@ -1376,7 +1394,7 @@ export class Form1 implements OnInit {
               err
             );
 
-            alert(
+            this.dialog.show(
               'Form1 Update Failed'
             );
 
@@ -1441,7 +1459,7 @@ export class Form1 implements OnInit {
                 this.zone_name
               );
 
-              alert(
+              this.dialog.show(
                 '✔ Form Submitted Successfully'
               );
 
@@ -1462,7 +1480,7 @@ export class Form1 implements OnInit {
               err
             );
 
-            alert(
+            this.dialog.show(
               'Form1 Submission Failed'
             );
 

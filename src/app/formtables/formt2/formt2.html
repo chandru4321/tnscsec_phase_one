@@ -7,6 +7,9 @@
 
 
 
+<!-- FORM HEADING (above the table) -->
+<h2 class="form-heading">படிவம் 2</h2>
+
 <div class="table-scroll-wrapper">
 
     <table class="report-table" id="reportTable">
@@ -119,7 +122,7 @@
                 </td>
 
                 <!-- F3 count -->
-                <td class="narrow-col">{{ r.f3_count }}</td>
+                <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan" class="narrow-col">{{ r.f3_count }}</td>
 
                 <!-- F5 name -->
                 <td class="wrap-col text-left total-cell">
@@ -127,7 +130,7 @@
                 </td>
 
                 <!-- F5 count -->
-                <td class="narrow-col">{{ r.f5_count }}</td>
+                <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan" class="narrow-col">{{ r.f5_count }}</td>
 
                 <!-- Selected/prepared societies — voter list count -->
                 <td class="narrow-col">
@@ -140,7 +143,7 @@
                 </td>
 
                 <!-- F6 count -->
-                <td class="narrow-col">{{ r.f6_count }}</td>
+                <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan" class="narrow-col">{{ r.f6_count }}</td>
 
                 <!-- Non-selected societies — voter list count -->
                 <td class="narrow-col">
@@ -153,7 +156,7 @@
                 </td>
 
                 <!-- Officer-prepared count -->
-                <td class="narrow-col">{{ r.f6_count }}</td>
+                <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan" class="narrow-col">{{ r.f6_count }}</td>
 
                 <!-- Officer-prepared voter list — count -->
                 <td class="narrow-col">

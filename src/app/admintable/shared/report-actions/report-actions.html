@@ -1,0 +1,33 @@
+<div class="table-actions">
+
+    <div class="filter-section">
+
+        <div class="filter-item">
+            <label>Department:</label>
+            <select [(ngModel)]="page.selectedDepartment" (change)="page.applyFilter()">
+                <option value="">All</option>
+                <option *ngFor="let d of page.departmentList" [value]="d.name">{{ d.name }}</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label>District:</label>
+            <select [(ngModel)]="page.selectedDistrict" (change)="page.applyFilter()">
+                <option value="">All</option>
+                <option *ngFor="let d of page.districtList" [value]="d.name">{{ d.name }}</option>
+            </select>
+        </div>
+
+    </div>
+
+    <div class="action-group">
+        <button *ngIf="abstract" class="view-toggle-btn" (click)="page.toggleViewMode()">
+            {{ page.viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+        </button>
+    
+        <button class="export-btn" (click)="page.downloadPdf()">
+            📄 {{ page.viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+        </button>
+    </div>
+
+</div>

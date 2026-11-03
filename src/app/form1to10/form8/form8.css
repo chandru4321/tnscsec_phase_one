@@ -497,8 +497,6 @@
     width: 100%;
 }
 
-}
-
 .member-col h5 {
     text-align: center;
     font-size: 22px;
@@ -632,4 +630,214 @@
     font-weight: 600;
     margin-left: 16px;
     white-space: nowrap;
+}
+
+/* Remaining votes box: blue while entering, green at 0, red if over */
+.remaining-box {
+    display: inline-block;
+    margin-left: 14px;
+    padding: 5px 14px;
+    border: 2px solid #1a73e8;
+    border-radius: 6px;
+    background: #e8f0fe;
+    color: #0b4fb3;
+    font-weight: 700;
+}
+
+.remaining-box.remaining-done {
+    border-color: #2e7d32;
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.remaining-box.remaining-over {
+    border-color: #d32f2f;
+    background: #fdecea;
+    color: #b71c1c;
+}
+
+/* ================= MOBILE =================
+   Phones: less padding, side-by-side fields stack, wide tables scroll
+   sideways inside their box instead of being cut off, multi-column
+   popup grids become one column. */
+@media (max-width: 768px) {
+
+    .page-bg {
+        padding: 16px 12px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .table-box {
+        padding: 8px;
+        overflow-x: auto;
+    }
+
+    table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    th,
+    td {
+        white-space: normal;
+        min-width: 70px;
+    }
+
+    .member-grid,
+    .grid-3,
+    .popup-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    button {
+        min-height: 40px;
+    }
+}
+
+
+/* ===== Locked banner (next form already submitted) ===== */
+.locked-banner {
+    margin: 12px 0 18px;
+    padding: 12px 16px;
+    background: #fdecea;
+    border: 1px solid #d32f2f;
+    border-radius: 6px;
+    color: #b71c1c;
+    font-weight: 600;
+}
+
+/* Votes already saved for this society — still clickable to edit */
+.btn-blue.btn-saved {
+    background: #2e7d32;
+}
+
+.btn-blue.btn-saved:hover:not(:disabled) {
+    background: #1b5e20;
+}
+
+/* ===== Stop election at vote counting ===== */
+.row-stopped td {
+    background: #fdecec;
+}
+
+.stop-note {
+    display: block;
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #c62828;
+}
+
+.btn-stop {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background: #d32f2f;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-stop:hover:not(:disabled) {
+    background: #b71c1c;
+}
+
+.btn-stop.is-stopped {
+    background: #fff;
+    color: #c62828;
+    border: 1px solid #c62828;
+}
+
+.btn-stop:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.stop-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.stop-modal {
+    width: 100%;
+    max-width: 520px;
+    padding: 20px 22px;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.stop-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.stop-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.stop-close {
+    border: none;
+    background: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.stop-society {
+    margin: 12px 0 10px;
+    font-weight: 600;
+}
+
+.reason-dropdown {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 14px;
+}
+
+.other-reason-box {
+    width: 100%;
+    min-height: 90px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.stop-hint {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    color: #6b7280;
+}
+
+.stop-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
 }

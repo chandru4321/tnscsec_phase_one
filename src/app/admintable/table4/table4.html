@@ -26,17 +26,23 @@
 
     </div>
 
-    <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
-        {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
-    </button>
+    <div class="action-group">
+        <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
+            {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+        </button>
 
-    <button class="export-btn" (click)="downloadPdf()">
-        📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
-    </button>
+        <button class="export-btn" (click)="downloadPdf()">
+            📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+        </button>
+    </div>
 
 </div>
 
 <!-- ABSTRACT (DISTRICT/ZONE-WISE SUMMARY) TABLE -->
+<!-- FORM HEADING (above the table) -->
+<h2 class="form-heading">படிவம் 4</h2>
+<div class="table-source">அட்டவணை 4 (பதிவு படிவம் 4-லிருந்து)</div>
+
 <div class="table-scroll-wrapper" *ngIf="viewMode === 'abstract'">
 
     <table class="report-table abstract-table" id="abstractTable">
@@ -45,13 +51,13 @@
 
             <tr class="top-header">
                 <th colspan="14">
-                    மாவட்டம் / சரகம் வாரியான சுருக்க எண்ணிக்கை விவரம்
+                    படிவம் 4 &nbsp;-&nbsp; வேட்புமனு தாக்கல் பற்றிய விபரம் (சுருக்கம்)
                 </th>
             </tr>
 
             <tr class="top-sub-header">
                 <th colspan="14">
-                    துறை -- {{ department_name }}
+                    துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                 </th>
             </tr>
 
@@ -62,21 +68,21 @@
                 <th rowspan="3">சங்கங்களின் எண்ணிக்கை</th>
 
                 <th colspan="4">
-                    தேர்தல் அறிவிப்பின்படி உறுப்பினர்களின் எண்ணிக்கை
-                </th>
-
-                <th rowspan="3">தாக்கல் செய்த சங்கங்கள்</th>
-
-                <th colspan="4">
                     தாக்கல் செய்யப்பட்ட உறுப்பினர்களின் எண்ணிக்கை
                 </th>
 
-                <th rowspan="3">தாக்கல் செய்யாத சங்கங்கள்</th>
+                <th rowspan="3">வேட்புமனு தாக்கல் செய்த சங்கங்கள்</th>
+
+                <th colspan="4">
+                    தேர்தல் அறிவிப்பின்படி வேட்பாளர்களின் எண்ணிக்கை
+                </th>
+
+                <th rowspan="3">வேட்புமனு தாக்கல் செய்யாத சங்கங்கள்</th>
             </tr>
 
             <tr class="mid-header">
                 <th colspan="4">உறுப்பினர்கள்</th>
-                <th colspan="4">உறுப்பினர்கள்</th>
+                <th colspan="4">வேட்பாளர்கள்</th>
             </tr>
 
             <tr class="sub-header">
@@ -89,6 +95,17 @@
                 <th>பெண்கள்</th>
                 <th>பொது</th>
                 <th>மொத்தம்</th>
+            </tr>
+
+            <tr class="col-number-row">
+                <th class="col-number-cell">1</th>
+                <th class="col-number-cell">2</th>
+                <th class="col-number-cell">3</th>
+                <th class="col-number-cell">4</th>
+                <th class="col-number-cell" colspan="4">5</th>
+                <th class="col-number-cell">6</th>
+                <th class="col-number-cell" colspan="4">7</th>
+                <th class="col-number-cell">8</th>
             </tr>
 
         </thead>
@@ -123,7 +140,8 @@
 
             <!-- GRAND TOTAL -->
             <tr *ngIf="abstractRows.length > 0" class="grand-total-row">
-                <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
+                <td colspan="2" class="text-left"><strong>மொத்தம்</strong></td>
+                <td><strong>{{ grandTotal.zone_count }}</strong></td>
                 <td><strong>{{ grandTotal.requiredCount }}</strong></td>
                 <td><strong>{{ grandTotal.ruralScTotal }}</strong></td>
                 <td><strong>{{ grandTotal.ruralWomenTotal }}</strong></td>
@@ -151,14 +169,14 @@
                 <!-- Title -->
                 <tr class="top-header">
                     <th colspan="15">
-                        செல்லத்தக்க வேட்புமனுக்களில் இருந்து திரும்பப் பெறுதல்
+                        படிவம் 4 &nbsp;-&nbsp; வேட்புமனு தாக்கல் பற்றிய விபரம்
                     </th>
                 </tr>
 
                 <!-- Department -->
                 <tr class="top-sub-header">
                     <th colspan="15">
-                        துறை -- {{ department_name }}
+                        துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                     </th>
                 </tr>
 
@@ -169,7 +187,7 @@
                     <th rowspan="3">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
 
                     <th colspan="5">
-                        தேர்தல் அறிவிப்பின்படி வேட்புமனு தாக்கல் நடைபெற வேண்டிய சங்கங்கள் மற்றும் உறுப்பினர்களின்
+                        தேர்தல் அறிவிப்பின்படி வேட்புமனு தாக்கல் நடைபெற வேண்டிய சங்கங்கள் மற்றும் வேட்பாளர்களின்
                         எண்ணிக்கை </th>
 
                     <th colspan="5">
@@ -256,7 +274,7 @@
 
                 <!-- GRAND TOTAL -->
                 <tr *ngIf="tableRows.length > 0" class="grand-total-row">
-                    <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
+                    <td colspan="3" class="text-left"><strong>மொத்தம்</strong></td>
                     <td></td>
                     <td><strong>{{ grandTotal.ruralScTotal }}</strong></td>
                     <td><strong>{{ grandTotal.ruralWomenTotal }}</strong></td>

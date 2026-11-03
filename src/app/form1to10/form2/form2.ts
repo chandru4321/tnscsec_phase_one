@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { Router } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-form2',
@@ -12,6 +14,12 @@ import { Router } from '@angular/router';
   styleUrls: ['./form2.css']
 })
 export class Form2 implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   district_name = '';
   zone_name = '';
@@ -134,7 +142,9 @@ export class Form2 implements OnInit {
         this.updateF5F6();
       },
 
-      error: () => {
+      error: (err: any) => {
+        // Locked (next form already submitted) → show it on the page
+        this.lockedMessage = lockedMessageFrom(err);
 
         this.isEditMode = false;
 
@@ -227,7 +237,7 @@ export class Form2 implements OnInit {
       .map(x => x.society_id);
 
     if (selectedIds.length === 0) {
-      alert('⚠️ குறைந்தது ஒரு சங்கத்தை தேர்வு செய்ய வேண்டும்');
+      this.dialog.show('⚠️ குறைந்தது ஒரு சங்கத்தை தேர்வு செய்ய வேண்டும்');
       return;
     }
 
@@ -253,7 +263,7 @@ export class Form2 implements OnInit {
           localStorage.setItem('form2_id', this.form2Id!.toString());
           localStorage.setItem('form2_completed', 'true');
 
-          alert('✔ Form-2 Updated Successfully');
+          this.dialog.show('✔ Form-2 Updated Successfully');
           this.router.navigate(['/layout/totalforms']);
         }
       });
@@ -270,7 +280,7 @@ export class Form2 implements OnInit {
           localStorage.setItem('form2_id', res.data.id);
           localStorage.setItem('form2_completed', 'true');
 
-          alert('✔ Form-2 Saved Successfully');
+          this.dialog.show('✔ Form-2 Saved Successfully');
           this.router.navigate(['/layout/totalforms']);
         }
       });

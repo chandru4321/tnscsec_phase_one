@@ -312,3 +312,251 @@
     /* space between box and text */
     cursor: pointer;
 }
+/* ================= MOBILE =================
+   Phones: less padding, side-by-side fields stack, wide tables scroll
+   sideways inside their box instead of being cut off, multi-column
+   popup grids become one column. */
+@media (max-width: 768px) {
+
+    .page-bg {
+        padding: 16px 12px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .table-box {
+        padding: 8px;
+        overflow-x: auto;
+    }
+
+    table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    th,
+    td {
+        white-space: normal;
+        min-width: 70px;
+    }
+
+    .member-grid,
+    .grid-3,
+    .popup-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    button {
+        min-height: 40px;
+    }
+}
+
+/* ===== Stop president election (column 10) ===== */
+.stop-btn {
+    background: #d32f2f;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stop-btn:hover {
+    background: #b71c1c;
+}
+
+.stop-btn:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+
+.stop-other {
+    margin-top: 12px;
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* ===== Submitted banner / edit ===== */
+.submitted-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin: 12px 0 20px;
+    padding: 12px 16px;
+    background: #e8f5e9;
+    border: 1px solid #2e7d32;
+    border-radius: 6px;
+    color: #1b5e20;
+    font-weight: 600;
+}
+
+.locked-note {
+    color: #b71c1c;
+}
+
+.edit-btn {
+    background: #1565c0;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.edit-btn:hover {
+    background: #0d47a1;
+}
+
+.edit-btn:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+}
+
+/* ===== 14 (b) — votes popup ===== */
+.vote-group {
+    margin: 10px 0 14px;
+}
+
+.vote-cat {
+    margin-bottom: 6px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.vote-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.vote-row.vote-leader {
+    border-color: #2e7d32;
+    background: #e8f5e9;
+}
+
+.vote-name {
+    flex: 1;
+}
+
+.vote-input {
+    width: 110px;
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    text-align: right;
+}
+
+.vote-result {
+    margin: 12px 0 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.vote-result.ok {
+    color: #1b5e20;
+    background: #e8f5e9;
+}
+
+.vote-result.tie {
+    color: #b71c1c;
+    background: #fdecec;
+}
+
+.empty-row {
+    color: #6b7280;
+    text-align: center;
+}
+
+/* 14 (b) — nothing to vote on yet */
+.pending-note {
+    margin: 8px 0 18px;
+    padding: 14px 16px;
+    border: 1px solid #f0c36d;
+    border-radius: 8px;
+    background: #fff8e1;
+    color: #5f4b00;
+}
+
+.pending-note p {
+    margin: 0 0 8px;
+    font-weight: 600;
+}
+
+.pending-note ul {
+    margin: 0 0 12px;
+    padding-left: 20px;
+}
+
+/* 14 (b) — voters / entered / remaining */
+.vote-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 6px 0 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #e3f2fd;
+    color: #0d47a1;
+    font-size: 14px;
+}
+
+.vote-summary.over {
+    background: #fdecec;
+    color: #b71c1c;
+}
+
+/* Votes tally exactly with the voters */
+.vote-summary.done {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.vote-result.pending {
+    color: #7a5a00;
+    background: #fff6d1;
+}
+
+/* Phones: the small step tables (3–5 columns) fit the screen instead of
+   scrolling sideways, so the action button in the last column stays visible */
+@media (max-width: 768px) {
+    .form-table {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+        font-size: 13px;
+    }
+
+    .form-table th,
+    .form-table td {
+        min-width: 0;
+        padding: 8px 6px;
+        word-break: break-word;
+    }
+
+    .form-table th:first-child,
+    .form-table td:first-child {
+        width: 44px;
+    }
+
+    .form-table .add-btn,
+    .form-table .edit-btn,
+    .form-table .stop-btn {
+        padding: 6px 8px;
+        white-space: normal;
+        line-height: 1.3;
+    }
+}

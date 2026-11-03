@@ -7,7 +7,7 @@
             </a>
             <!-- <a [routerLink]="['/layout/electionprogramme']">
             தேர்தல் திட்ட அறிவிப்பு (Election Programme)
-        </a> -->s
+        </a> -->
         </div>
 
         <table class="forms-table">
@@ -19,11 +19,17 @@
                     {{ f.title }}
                 </td>
 
+                <!-- Form Number Badge -->
+                <td class="badge-cell">
+                    <span class="form-badge">{{ f.label }}</span>
+                </td>
+
                 <!-- Arrow Click → Table Page -->
                 <td class="link">
-                    <a [routerLink]="f.tableLink" class="arrow-link">
+                    <a *ngIf="f.tableLink" [routerLink]="f.tableLink" class="arrow-link">
                         →
                     </a>
+                    <span *ngIf="!f.tableLink && f.note" class="no-abstract">{{ f.note }}</span>
                 </td>
 
             </tr>

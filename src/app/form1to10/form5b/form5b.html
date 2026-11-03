@@ -58,6 +58,10 @@
             placeholder="காரணத்தை உள்ளிடவும் (அதிகபட்சம் 555 எழுத்துகள்)"></textarea>
 
         <div class="modal-footer">
+            <!-- Already stopped: the election can be restarted (second click confirms) -->
+            <button *ngIf="selectedSociety?.stopDone && isEditMode" class="btn-green" (click)="restartElection()">
+                {{ confirmRestart ? 'உறுதி செய்ய மீண்டும் அழுத்தவும்' : 'தேர்தலை மீண்டும் தொடங்க' }}
+            </button>
             <button class="btn-grey" (click)="closeStop()">ரத்து செய்</button>
             <button class="btn-red" (click)="submitStop()">சமர்ப்பிக்க</button>
         </div>
@@ -71,9 +75,12 @@
 
 <div class="page-bg">
 
-    <h2 class="form">படிவம் 5b</h2>
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
+
+    <h2 class="form">படிவம் 6</h2>
     <h2 class="form-title">
-        வேட்புமனு தாக்கல் செய்த உறுப்பினர்களின் பெயர் மற்றும் விபரம்
+        வேட்புமனு பரிசீலனை மற்றும் தகுதிபெற்ற வேட்புமனுக்கள் பட்டியல் பற்றிய விவரங்கள்
     </h2>
 
 
@@ -95,7 +102,7 @@
     </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -124,7 +131,7 @@
         வேட்புமனு பரிசீலனையின் போது தள்ளுபடி செய்யப்பட்ட வேட்பு மனுக்கள் </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -152,14 +159,14 @@
 
                             {{ s.rejectDone ? 'திருத்தம் மேற்கொள்ளப்பட்டது' : 'திருத்தம் மேற்கொள்ள' }}
                         </button> -->
-                        <button class="btn-blue" (click)="openRejectPopup(s)" [disabled]="s.rejectDone">
+                        <button class="btn-blue" (click)="openRejectPopup(s)" [disabled]="s.stopDone">
 
                             {{ s.rejectDone ? 'திருத்தம் மேற்கொள்ளப்பட்டது' : 'திருத்தம் மேற்கொள்ள' }}
                         </button>
                     </td>
 
                     <td>
-                        <button class="btn-red" (click)="openStopPopup(s)" [disabled]="s.stopDone">
+                        <button class="btn-red" (click)="openStopPopup(s)" [disabled]="s.stopDone && !isEditMode">
 
                             {{ s.stopDone ? 'தேர்தல் நிறுத்தப்பட்டது' : 'தேர்தலை நிறுத்த' }}
                         </button>
@@ -276,7 +283,7 @@
 </div> -->
 
     <div class="final-submit-bar-right" *ngIf="!formSubmitted">
-        <button class="btn-blue" (click)="submitForm5bFinal()">
+        <button class="btn-blue" (click)="openFinalSubmit()">
             சமர்ப்பிக்க
         </button>
     </div>
@@ -290,22 +297,44 @@
 
 
 
-    '
-    <!-- ================= FINAL SUCCESS POPUP ================= -->
+    <!-- ================= FINAL SUBMIT: CONFIRM ================= -->
+    <div class="modal-backdrop" *ngIf="showConfirmPopup" (click)="!submitting && (showConfirmPopup = false)">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title" (click)="$event.stopPropagation()">
+            <div class="dialog-icon warn" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 15h-2v-2h2v2Zm0-4h-2V7h2v6Z"/></svg>
+            </div>
+            <h3 id="confirm-title" class="dialog-title">படிவம் 6 – இறுதி சமர்ப்பிப்பு</h3>
+            <p class="dialog-text">
+                சமர்ப்பித்த பின் படிவம் 5-ல் (வேட்பாளர் விவரங்கள்) மாற்றம் செய்ய இயலாது.
+                அனைத்து விவரங்களும் சரியாக உள்ளதா?
+            </p>
+
+            <p class="dialog-error" *ngIf="submitError" role="alert">{{ submitError }}</p>
+
+            <div class="dialog-actions">
+                <button type="button" class="dlg-btn ghost" [disabled]="submitting" (click)="showConfirmPopup = false">
+                    ரத்து செய்ய
+                </button>
+                <button type="button" class="dlg-btn primary" [disabled]="submitting" (click)="submitForm5bFinal()">
+                    <span class="dlg-spinner" *ngIf="submitting" aria-hidden="true"></span>
+                    {{ submitting ? 'சமர்ப்பிக்கிறது…' : 'ஆம், சமர்ப்பிக்க' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= FINAL SUBMIT: SUCCESS ================= -->
     <div class="modal-backdrop" *ngIf="showFinalSubmitPopup">
-        <div class="modal-box small">
-            <div class="modal-header">
-                <h3>Form 6</h3>
-                <button class="close-btn" (click)="showFinalSubmitPopup=false">×</button>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="success-title">
+            <div class="dialog-icon ok" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6 11-11-1.4-1.4-9.6 9.6Z"/></svg>
             </div>
+            <h3 id="success-title" class="dialog-title">வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது</h3>
+            <p class="dialog-text">படிவம் 6 (வேட்புமனு பரிசீலனை) சமர்ப்பிக்கப்பட்டது.</p>
 
-            <div class="success-box">
-                ✔️ Form 6 வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-blue" (click)="showFinalSubmitPopup=false">
-                    சரி
+            <div class="dialog-actions single">
+                <button type="button" class="dlg-btn primary" (click)="finishSubmit()">
+                    படிவங்கள் பக்கத்திற்குச் செல்ல
                 </button>
             </div>
         </div>

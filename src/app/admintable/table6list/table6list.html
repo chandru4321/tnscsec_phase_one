@@ -1,0 +1,85 @@
+<div class="page-content">
+
+    <app-report-actions [page]="this"></app-report-actions>
+
+    <!-- ABSTRACT -->
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 8</h2>
+    <div class="table-source">அட்டவணை 8 (பதிவு படிவம் 8-லிருந்து)</div>
+
+    <app-abstract-table *ngIf="viewMode === 'abstract'"
+        formNumber="படிவம் 8" [title]="title" [department]="selectedDepartment || department_name || 'அனைத்தும்'"
+        [groups]="abstractGroups" [rows]="abstractRows">
+    </app-abstract-table>
+
+    <!-- FULL LIST -->
+    <div class="table-scroll-wrapper" *ngIf="viewMode === 'full'">
+        <table class="report-table">
+
+            <thead>
+
+                <tr class="top-header">
+                    <th colspan="17">படிவம் 8 &nbsp;-&nbsp; {{ title }}</th>
+                </tr>
+
+                <tr class="top-sub-header">
+                    <th colspan="17">துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}</th>
+                </tr>
+
+                <tr class="main-header">
+                    <th rowspan="2">வ.எண்</th>
+                    <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் மாவட்டம்/மண்டலம்</th>
+                    <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
+                    <th colspan="4" *ngFor="let g of abstractGroups">{{ g.label }}</th>
+                    <th colspan="2">தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்</th>
+                </tr>
+
+                <tr class="sub-header">
+                    <ng-container *ngFor="let g of abstractGroups">
+                        <th>சங்கங்கள்</th>
+                        <th>ப.இ./ப.கு</th>
+                        <th>மகளிர்</th>
+                        <th>பொது</th>
+                    </ng-container>
+                    <th>சங்கத்தின் பெயர்</th>
+                    <th>காரணம்</th>
+                </tr>
+
+                <tr class="col-number-row">
+                    <th class="col-number-cell">1</th>
+                    <th class="col-number-cell">2</th>
+                    <th class="col-number-cell">3</th>
+                    <th class="col-number-cell" colspan="4">4</th>
+                    <th class="col-number-cell" colspan="4">5</th>
+                    <th class="col-number-cell" colspan="4">6</th>
+                    <th class="col-number-cell" colspan="2">7</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                <tr *ngIf="tableRows.length === 0">
+                    <td colspan="17" class="empty-table-message">தரவு இல்லை</td>
+                </tr>
+
+                <tr *ngFor="let r of tableRows">
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.serial }}</td>
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.district_name }}</td>
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.zone_name }}</td>
+
+                    <ng-container *ngFor="let n of [r.contesting, r.unopposed, r.less]">
+                        <td class="text-left names-cell">{{ n?.society ?? '-' }}</td>
+                        <td class="text-left names-cell">{{ n?.sc ?? '-' }}</td>
+                        <td class="text-left names-cell">{{ n?.women ?? '-' }}</td>
+                        <td class="text-left names-cell">{{ n?.general ?? '-' }}</td>
+                    </ng-container>
+
+                    <td class="text-left names-cell">{{ r.stopped?.society ?? '-' }}</td>
+                    <td class="text-left names-cell">{{ r.stopped?.reason ?? '-' }}</td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+</div>

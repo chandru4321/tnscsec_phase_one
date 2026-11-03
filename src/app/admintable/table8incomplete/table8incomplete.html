@@ -1,0 +1,70 @@
+<div class="page-content">
+
+    <app-report-actions [page]="this"></app-report-actions>
+
+    <!-- ABSTRACT (district / zone-wise) -->
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 13</h2>
+    <div class="table-source">அட்டவணை 13 (பதிவு படிவம் 13-லிருந்து)</div>
+
+    <app-abstract-table *ngIf="viewMode === 'abstract'"
+        formNumber="படிவம் 13" [title]="title" [department]="selectedDepartment || department_name || 'அனைத்தும்'"
+        [groups]="abstract.groups" [rows]="abstract.zones">
+    </app-abstract-table>
+
+    <div class="table-scroll-wrapper" *ngIf="viewMode === 'full'">
+        <table class="report-table incomplete-table">
+
+            <thead>
+
+                <tr class="top-header">
+                    <th colspan="12">படிவம் 13 &nbsp;-&nbsp; {{ title }}</th>
+                </tr>
+
+                <tr class="top-sub-header">
+                    <th colspan="12">துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}</th>
+                </tr>
+
+                <tr class="main-header">
+                    <th rowspan="2">வ. எண்</th>
+                    <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் மாவட்டம் / மண்டலம்</th>
+                    <th rowspan="2">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
+                    <th rowspan="2">தேர்தல் அறிவிப்புபடி தேர்தல் முடிவடையாத சங்கங்களின் பெயர்</th>
+                    <th colspan="2">எத்தகைய தேர்தல் நடவடிக்கையின் போது தேர்தல் நிறுத்தப்பட்டது / நடைபெறவில்லை</th>
+                    <th colspan="6">நிர்வாகக்குழு உறுப்பினர் தேர்தல் முடிவடையாத / நிறுத்தப்பட்டதற்கான காரணங்கள்</th>
+                </tr>
+
+                <tr class="sub-header">
+                    <th>படிவம் எண் (5a)</th>
+                    <th>தேர்தல் நடவடிக்கை விபரம் (5b)</th>
+                    <th *ngFor="let c of reasonColumns">{{ c }}</th>
+                </tr>
+
+                <tr class="col-number-row">
+                    <th class="col-number-cell" *ngFor="let n of [1, 2, 3, 4]">{{ n }}</th>
+                    <th class="col-number-cell" colspan="2">5</th>
+                    <th class="col-number-cell" *ngFor="let n of [6, 7, 8, 9, 10, 11]">{{ n }}</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                <tr *ngIf="tableRows.length === 0">
+                    <td colspan="12" class="empty-table-message">தரவு இல்லை</td>
+                </tr>
+
+                <tr *ngFor="let r of tableRows; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td class="text-left">{{ r.district_name }}</td>
+                    <td class="text-left">{{ r.zone_name }}</td>
+                    <td class="text-left">{{ r.society_name }}</td>
+                    <td class="text-left">{{ r.stage_form }}</td>
+                    <td class="text-left">{{ r.stage_text }}</td>
+                    <td *ngFor="let m of r.marks" [class.tick]="m === '✓'">{{ m }}</td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+</div>

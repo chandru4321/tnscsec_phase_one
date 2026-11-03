@@ -7,66 +7,67 @@ interface TableRow {
   district_name: string;
   zone_name: string;
 
-  // Group: final candidate list, per society (always shown) — shows the
-  // actual candidate NAMES per category, not just a count, since
-  // "இறுதி பட்டியலின்படி" refers to Form6's own final candidate list.
-  society_name: string;
-  dec_sc_names: string;
-  dec_women_names: string;
-  dec_general_names: string;
-  dec_total: number;
+  // Group: total committee members to be elected (Form4 seats)
+  seat_sc: number;
+  seat_women: number;
+  seat_general: number;
+  seat_total: number;
 
-  // Group: count of the final candidate list above (same society, just
-  // the numeric count of each category instead of the names)
+  // Group: qualified nominations count (before withdrawal)
   count_society_name: string;
-  count_sc: number;
-  count_women: number;
-  count_general: number;
-  count_total: number;
+  count_sc: number | string;
+  count_women: number | string;
+  count_general: number | string;
+  count_total: number | string;
 
   // Group: withdrawn (only when > 0)
   w_society_name: string;
-  w_sc: number;
-  w_women: number;
-  w_general: number;
-  w_total: number;
+  w_sc: number | string;
+  w_women: number | string;
+  w_general: number | string;
+  w_total: number | string;
+
+  // Group: final qualified count = qualified − withdrawn
+  fin_society_name: string;
+  fin_sc: number | string;
+  fin_women: number | string;
+  fin_general: number | string;
+  fin_total: number | string;
 
   // Group: UNOPPOSED (equal — no contest)
   eq_society_name: string;
-  eq_sc: number;
-  eq_women: number;
-  eq_general: number;
-  eq_total: number;
+  eq_sc: number | string;
+  eq_women: number | string;
+  eq_general: number | string;
+  eq_total: number | string;
 
   // Group: UNQUALIFIED (less than required)
   less_society_name: string;
-  less_sc: number;
-  less_women: number;
-  less_general: number;
-  less_total: number;
+  less_sc: number | string;
+  less_women: number | string;
+  less_general: number | string;
+  less_total: number | string;
 
   // Group: declared elected unopposed — UNOPPOSED societies, PLUS an
   // UNQUALIFIED society whose final candidate count is still >= 50% of the
   // required (rural) committee seats (partial committee declared unopposed
   // rather than going to a contested Form9 election).
   declared_society_name: string;
-  declared_sc: number;
-  declared_women: number;
-  declared_general: number;
-  declared_total: number;
+  declared_sc: number | string;
+  declared_women: number | string;
+  declared_general: number | string;
+  declared_total: number | string;
 
   // Group: QUALIFIED — goes to polling
   final_society_name: string;
-  final_sc: number;
-  final_women: number;
-  final_general: number;
-  final_total: number;
+  final_sc: number | string;
+  final_women: number | string;
+  final_general: number | string;
+  final_total: number | string;
 
-  // Group: election stopped — name + reason
-  // NOTE: backend doesn't yet track a structured stop reason for Form6
-  // (only a free-text remark, and it folds into UNQUALIFIED status without
-  // a way to tell "stopped" apart from "naturally short of candidates") —
-  // these stay '-' until that's added, matching Form5B's stop_reason field.
+  // Group: election stopped — name + reason. A society with
+  // election_action "STOP" carries its free-text remark here, telling it
+  // apart from an ordinary UNQUALIFIED (naturally short of candidates).
   stopped_society_name: string;
   stop_reason_display: string;
 
@@ -121,6 +122,13 @@ export class Formt6 implements OnInit {
 
           const { isQualified, isUnopposed, isUnqualified, isDeclaredUnopposed } = classified[index];
 
+          // A society stopped entirely within Form6 belongs ONLY in the
+          // "தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்" group. The backend also sets
+          // its election_status to UNQUALIFIED, so without this guard it
+          // would ALSO show up (with 0s) under the unqualified group —
+          // this keeps every other group blank for a stopped row.
+          const isStopped = soc.election_action === 'STOP';
+
           const wSc = soc.withdrawn_counts?.sc_st || 0;
           const wWomen = soc.withdrawn_counts?.women || 0;
           const wGeneral = soc.withdrawn_counts?.general || 0;
@@ -130,56 +138,74 @@ export class Formt6 implements OnInit {
             district_name: district,
             zone_name: zone,
 
-            society_name: soc.society_name || '-',
-            dec_sc_names: (soc.final_scst_names || []).join(', ') || '-',
-            dec_women_names: (soc.final_women_names || []).join(', ') || '-',
-            dec_general_names: (soc.final_general_names || []).join(', ') || '-',
-            dec_total:
+            // "மொத்த நிர்வாகக்குழு உறுப்பினர்களின் எண்ணிக்கை" — the
+            // society's committee seats as entered in Form4
+            seat_sc: soc.rural_sc_st || 0,
+            seat_women: soc.rural_women || 0,
+            seat_general: soc.rural_general || 0,
+            seat_total: soc.rural_total || 0,
+
+            // "தகுதிபெற்ற வேட்பு மனுக்கள் பட்டியல்படி..." = the valid-
+            // nominations count BEFORE Form6 withdrawal (withdrawals are
+            // subtracted separately in the next column group), so this
+            // must add back wSc/wWomen/wGeneral — final_*_names already
+            // excludes withdrawn candidates.
+            count_society_name: isStopped ? '-' : (soc.society_name || '-'),
+            count_sc: isStopped ? '-' : (soc.final_scst_names?.length || 0) + wSc,
+            count_women: isStopped ? '-' : (soc.final_women_names?.length || 0) + wWomen,
+            count_general: isStopped ? '-' : (soc.final_general_names?.length || 0) + wGeneral,
+            count_total: isStopped ? '-' :
+              (soc.final_scst_names?.length || 0) +
+              (soc.final_women_names?.length || 0) +
+              (soc.final_general_names?.length || 0) +
+              wTotal,
+
+            w_society_name: !isStopped ? (soc.society_name || '-') : '-',
+            w_sc: isStopped ? '-' : wSc,
+            w_women: isStopped ? '-' : wWomen,
+            w_general: isStopped ? '-' : wGeneral,
+            w_total: isStopped ? '-' : wTotal,
+
+            // Column 4 − Column 5: the final candidate list (withdrawn
+            // candidates are already excluded from final_*_names)
+            fin_society_name: isStopped ? '-' : (soc.society_name || '-'),
+            fin_sc: isStopped ? '-' : (soc.final_scst_names?.length || 0),
+            fin_women: isStopped ? '-' : (soc.final_women_names?.length || 0),
+            fin_general: isStopped ? '-' : (soc.final_general_names?.length || 0),
+            fin_total: isStopped ? '-' :
               (soc.final_scst_names?.length || 0) +
               (soc.final_women_names?.length || 0) +
               (soc.final_general_names?.length || 0),
 
-            count_society_name: soc.society_name || '-',
-            count_sc: soc.final_scst_names?.length || 0,
-            count_women: soc.final_women_names?.length || 0,
-            count_general: soc.final_general_names?.length || 0,
-            count_total:
-              (soc.final_scst_names?.length || 0) +
-              (soc.final_women_names?.length || 0) +
-              (soc.final_general_names?.length || 0),
+            eq_society_name: (!isStopped && isUnopposed) ? (soc.society_name || '-') : '-',
+            eq_sc: (!isStopped && isUnopposed) ? (soc.final_sc_st || 0) : '-',
+            eq_women: (!isStopped && isUnopposed) ? (soc.final_women || 0) : '-',
+            eq_general: (!isStopped && isUnopposed) ? (soc.final_general || 0) : '-',
+            eq_total: (!isStopped && isUnopposed) ? (soc.final_total || 0) : '-',
 
-            w_society_name: wTotal > 0 ? (soc.society_name || '-') : '-',
-            w_sc: wSc,
-            w_women: wWomen,
-            w_general: wGeneral,
-            w_total: wTotal,
+            less_society_name: (!isStopped && isUnqualified) ? (soc.society_name || '-') : '-',
+            less_sc: (!isStopped && isUnqualified) ? (soc.final_sc_st || 0) : '-',
+            less_women: (!isStopped && isUnqualified) ? (soc.final_women || 0) : '-',
+            less_general: (!isStopped && isUnqualified) ? (soc.final_general || 0) : '-',
+            less_total: (!isStopped && isUnqualified) ? (soc.final_total || 0) : '-',
 
-            eq_society_name: isUnopposed ? (soc.society_name || '-') : '-',
-            eq_sc: isUnopposed ? (soc.final_sc_st || 0) : 0,
-            eq_women: isUnopposed ? (soc.final_women || 0) : 0,
-            eq_general: isUnopposed ? (soc.final_general || 0) : 0,
-            eq_total: isUnopposed ? (soc.final_total || 0) : 0,
+            declared_society_name: (!isStopped && isDeclaredUnopposed) ? (soc.society_name || '-') : '-',
+            declared_sc: (!isStopped && isDeclaredUnopposed) ? (soc.final_sc_st || 0) : '-',
+            declared_women: (!isStopped && isDeclaredUnopposed) ? (soc.final_women || 0) : '-',
+            declared_general: (!isStopped && isDeclaredUnopposed) ? (soc.final_general || 0) : '-',
+            declared_total: (!isStopped && isDeclaredUnopposed) ? (soc.final_total || 0) : '-',
 
-            less_society_name: isUnqualified ? (soc.society_name || '-') : '-',
-            less_sc: isUnqualified ? (soc.final_sc_st || 0) : 0,
-            less_women: isUnqualified ? (soc.final_women || 0) : 0,
-            less_general: isUnqualified ? (soc.final_general || 0) : 0,
-            less_total: isUnqualified ? (soc.final_total || 0) : 0,
+            final_society_name: (!isStopped && isQualified) ? (soc.society_name || '-') : '-',
+            final_sc: (!isStopped && isQualified) ? (soc.final_sc_st || 0) : '-',
+            final_women: (!isStopped && isQualified) ? (soc.final_women || 0) : '-',
+            final_general: (!isStopped && isQualified) ? (soc.final_general || 0) : '-',
+            final_total: (!isStopped && isQualified) ? (soc.final_total || 0) : '-',
 
-            declared_society_name: isDeclaredUnopposed ? (soc.society_name || '-') : '-',
-            declared_sc: isDeclaredUnopposed ? (soc.final_sc_st || 0) : 0,
-            declared_women: isDeclaredUnopposed ? (soc.final_women || 0) : 0,
-            declared_general: isDeclaredUnopposed ? (soc.final_general || 0) : 0,
-            declared_total: isDeclaredUnopposed ? (soc.final_total || 0) : 0,
-
-            final_society_name: isQualified ? (soc.society_name || '-') : '-',
-            final_sc: isQualified ? (soc.final_sc_st || 0) : 0,
-            final_women: isQualified ? (soc.final_women || 0) : 0,
-            final_general: isQualified ? (soc.final_general || 0) : 0,
-            final_total: isQualified ? (soc.final_total || 0) : 0,
-
-            stopped_society_name: '-',
-            stop_reason_display: '-',
+            // A society stopped entirely within Form6 (as opposed to an
+            // individual candidate withdrawal) carries election_action
+            // "STOP" and a free-text remark — surface both here.
+            stopped_society_name: isStopped ? (soc.society_name || '-') : '-',
+            stop_reason_display: isStopped ? (soc.remark || '-') : '-',
 
             // Serial/district/zone merge into one cell spanning every
             // society row — the whole table is a single district/zone.
@@ -201,7 +227,10 @@ export class Formt6 implements OnInit {
 
     // Partial-committee rule: an UNQUALIFIED society still counts as
     // "declared elected unopposed" if its final candidates cover at
-    // least half of the required (rural) committee seats.
+    // least half of the required (rural) committee seats. Mirrors
+    // table6.ts (admin) exactly: this is NOT mutually exclusive with
+    // isUnqualified above — such a society is meant to show in BOTH the
+    // unqualified group and the declared-unopposed group.
     const requiredTotal = soc.rural_total || 0;
     const meetsPartialThreshold =
       requiredTotal > 0 && (soc.final_total || 0) >= requiredTotal * 0.5;

@@ -1,0 +1,71 @@
+<div class="table-scroll-wrapper">
+
+    <table class="report-table abstract-table">
+
+        <thead>
+
+            <tr class="top-header">
+                <th [attr.colspan]="columnCount">
+                    {{ formNumber }} &nbsp;-&nbsp; {{ title }} (சுருக்கம்)
+                </th>
+            </tr>
+
+            <tr class="top-sub-header">
+                <th [attr.colspan]="columnCount">
+                    துறை -- {{ department }}
+                </th>
+            </tr>
+
+            <!-- GROUP HEADER -->
+            <tr class="main-header">
+                <th [attr.rowspan]="hasSubs ? 2 : 1">வ. எண்</th>
+                <th [attr.rowspan]="hasSubs ? 2 : 1">மாவட்டம்</th>
+                <th [attr.rowspan]="hasSubs ? 2 : 1">சரகம்</th>
+
+                <ng-container *ngFor="let g of groups">
+                    <th *ngIf="g.subs?.length; else single" [attr.colspan]="g.subs!.length">{{ g.label }}</th>
+                    <ng-template #single>
+                        <th [attr.rowspan]="hasSubs ? 2 : 1">{{ g.label }}</th>
+                    </ng-template>
+                </ng-container>
+            </tr>
+
+            <!-- SUB HEADER -->
+            <tr class="sub-header" *ngIf="hasSubs">
+                <th *ngFor="let s of subHeadings">{{ s }}</th>
+            </tr>
+
+            <!-- COLUMN NUMBER ROW -->
+            <tr class="col-number-row">
+                <th class="col-number-cell">1</th>
+                <th class="col-number-cell">2</th>
+                <th class="col-number-cell">3</th>
+                <th class="col-number-cell" *ngFor="let g of groups; let i = index"
+                    [attr.colspan]="g.subs?.length || 1">{{ i + 4 }}</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+            <tr *ngIf="rows.length === 0">
+                <td [attr.colspan]="columnCount" class="empty-table-message">தரவு இல்லை</td>
+            </tr>
+
+            <tr *ngFor="let r of rows; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td class="text-left">{{ r.district_name }}</td>
+                <td class="text-left">{{ r.zone_name }}</td>
+                <td *ngFor="let v of r.values">{{ v }}</td>
+            </tr>
+
+            <!-- GRAND TOTAL -->
+            <tr *ngIf="rows.length > 0" class="grand-total-row">
+                <td colspan="2" class="text-left"><strong>மொத்தம்</strong></td>
+                <td><strong>{{ rows.length }}</strong></td>
+                <td *ngFor="let t of totals"><strong>{{ t }}</strong></td>
+            </tr>
+        </tbody>
+
+    </table>
+
+</div>

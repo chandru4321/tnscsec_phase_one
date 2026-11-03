@@ -1,18 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MobileCardsDirective } from '../../shared/mobile-cards.directive';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { Router } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-form5b',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MobileCardsDirective],
   templateUrl: './form5b.html',
   styleUrls: ['./form5b.css']
 })
 
 export class Form5b implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   district_name = '';
   zone_name = '';
@@ -26,6 +35,11 @@ export class Form5b implements OnInit {
   showRejectPopup = false;
   showStopPopup = false;
   showFinalSubmitPopup = false;
+
+  // Final submit: confirm first (it locks Form 5), then success / error
+  showConfirmPopup = false;
+  submitting = false;
+  submitError = '';
 
   stopReason = '';
   stopOtherReasonText: string | null = null;
@@ -83,7 +97,9 @@ export class Form5b implements OnInit {
         this.loadPreview();
       },
 
-      error: () => {
+      error: (err: any) => {
+        // Locked (next form already submitted) → show it on the page
+        this.lockedMessage = lockedMessageFrom(err);
 
         this.isEditMode = false;
 
@@ -94,7 +110,25 @@ export class Form5b implements OnInit {
 
 
 
-  /* ================= PREVIEW ================= */
+  // A society has been submitted once when any of its candidates is saved
+  // as withdrawn; until then the popup uses the first-submit (add) API.
+  hasSavedWithdrawal(form4FiledSocId: number): boolean {
+    if (!this.isEditMode) return false;
+    const soc = this.editableData?.societies?.find(
+      (x: any) => x.form4_filed_soc_id === form4FiledSocId
+    );
+    return !!soc?.members?.some((m: any) => m.is_stopped === true);
+  }
+
+  refreshEditableData() {
+    this.userService.getEditableForm5b().subscribe({
+      next: (res: any) => {
+        this.isEditMode = true;
+        this.editableData = res.data;
+      },
+      error: () => {}
+    });
+  }
 
   /* ================= PREVIEW ================= */
 
@@ -110,8 +144,9 @@ export class Form5b implements OnInit {
 
       const prepared = res.data.societies.map((s: any) => {
 
+        // withdrawn-but-not-yet-final candidates (is_stopped) are not counted
         const activeMembers = s.members.filter(
-          (m: any) => m.is_active === true
+          (m: any) => m.is_active === true && m.is_stopped !== true
         );
 
         return {
@@ -168,7 +203,8 @@ export class Form5b implements OnInit {
           ...soc,
           members: editableSoc.members.map((m: any) => ({
             ...m,
-            checked: !m.is_active   // previously withdrawn = checked
+            // previously withdrawn = checked (untick to restore)
+            checked: m.is_stopped === true || m.is_active === false
           }))
         };
 
@@ -215,43 +251,44 @@ export class Form5b implements OnInit {
     //   return;
     // }
 
-    /* ===== EDIT MODE ===== */
-    if (this.isEditMode) {
+    /* ===== EDIT MODE: only once this society has a saved withdrawal ===== */
+    if (this.hasSavedWithdrawal(this.selectedSociety.form4_filed_soc_id)) {
 
+      // Update API directly: this society's ticked candidates are withdrawn,
+      // previously withdrawn ones that are now unticked are restored.
+      // form4_id is filled in by the backend (the user's Form4).
       const payload = {
-        updates: candidateIds.map((id: number) => ({
-          form5_id: id,
-          member_name: '',
-          aadhar_no: ''
-        }))
+        form4_filed_soc_id: this.selectedSociety.form4_filed_soc_id,
+        stopped_candidate_ids: candidateIds
       };
 
-      console.log('EDIT PAYLOAD', payload);
-
-      this.userService.editForm5b(payload).subscribe((res: any) => {
-
-        if (res?.success) {
-
-          const soc = this.f4Societies.find(
-            (x: any) =>
-              x.form4_filed_soc_id === this.selectedSociety.form4_filed_soc_id
-          );
-
-          if (soc) {
-            soc.rejectDone = true;
+      this.userService.editForm5b(payload).subscribe({
+        next: (res: any) => {
+          if (res?.success) {
+            this.dialog.show('✔ Form5B Updated Successfully');
+            this.closeReject();
+            // reload so the counts and the edit data show the saved state
+            this.loadEditableForm5b();
           }
-
-          alert('✔ Form5B Updated Successfully');
-
-          this.closeReject();
-        }
-
+        },
+        error: (err: any) => this.dialog.show('✘ ' + (err?.error?.message || 'Form5B update failed'))
       });
 
     }
 
-    /* ===== ADD MODE ===== */
+    /* ===== ADD MODE: first submit for this society ===== */
     else {
+
+      // No withdrawals in this society: nothing to save, just mark it done
+      if (!candidateIds.length) {
+        const soc = this.f4Societies.find(
+          (x: any) => x.form4_filed_soc_id === this.selectedSociety.form4_filed_soc_id
+        );
+        if (soc) soc.rejectDone = true;
+        this.dialog.show('✔ Form5B Submitted Successfully');
+        this.closeReject();
+        return;
+      }
 
       const payload = {
         candidate_ids: candidateIds
@@ -298,12 +335,14 @@ export class Form5b implements OnInit {
             soc.rejectDone = true;
           }
 
-          alert('✔ Form5B Submitted Successfully');
+          this.dialog.show('✔ Form5B Submitted Successfully');
 
           this.closeReject();
+          // refresh the saved state so the next change goes through update
+          this.refreshEditableData();
         }
 
-      });
+      }, (err: any) => this.dialog.show('✘ ' + (err?.error?.message || 'Form5B submit failed')));
     }
   }
   /* ================= STOP ELECTION ================= */
@@ -323,7 +362,34 @@ export class Form5b implements OnInit {
 
     this.showStopPopup = false;
     this.selectedSociety = null;
+    this.confirmRestart = false;
 
+  }
+
+  // Restart a stopped society: clears the stop and brings its candidates back
+  confirmRestart = false;
+
+  restartElection() {
+    if (!this.confirmRestart) {
+      this.confirmRestart = true;
+      return;
+    }
+
+    this.userService.editForm5b({
+      restarted_societies: [this.selectedSociety.form4_filed_soc_id]
+    }).subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          this.dialog.show('✔ தேர்தல் மீண்டும் தொடங்கப்பட்டது');
+          this.closeStop();
+          this.loadEditableForm5b();
+        }
+      },
+      error: (err: any) => {
+        this.confirmRestart = false;
+        this.dialog.show('✘ ' + (err?.error?.message || 'Restart failed'));
+      }
+    });
   }
 
 
@@ -334,7 +400,7 @@ export class Form5b implements OnInit {
 
     if (!this.stopReason) {
 
-      alert('தேர்தல் நிறுத்துவதற்கான காரணத்தை தேர்வு செய்யவும்');
+      this.dialog.show('தேர்தல் நிறுத்துவதற்கான காரணத்தை தேர்வு செய்யவும்');
       return;
 
     }
@@ -346,6 +412,21 @@ export class Form5b implements OnInit {
       other_reason_text: this.stopReason === 'other' ? (this.stopOtherReasonText || '') : null
 
     };
+
+    /* ===== EDIT MODE: update API directly ===== */
+    if (this.isEditMode) {
+      this.userService.editForm5b({ stopped_societies: [payload] }).subscribe({
+        next: (res: any) => {
+          if (res?.success) {
+            this.dialog.show('✔ Form5B Updated Successfully');
+            this.closeStop();
+            this.loadEditableForm5b();
+          }
+        },
+        error: (err: any) => this.dialog.show('✘ ' + (err?.error?.message || 'Form5B update failed'))
+      });
+      return;
+    }
 
     this.userService.postsocietystop(payload).subscribe(res => {
 
@@ -365,28 +446,43 @@ export class Form5b implements OnInit {
 
   /* ================= FINAL SUBMIT ================= */
 
+  openFinalSubmit() {
+    if (this.formSubmitted) return;
+    this.submitError = '';
+    this.showConfirmPopup = true;
+  }
+
   submitForm5bFinal() {
 
-    if (this.formSubmitted) return;
+    if (this.formSubmitted || this.submitting) return;
 
-    this.userService.submitForm5b({}).subscribe(res => {
+    this.submitting = true;
+    this.submitError = '';
 
-      if (res?.success) {
+    this.userService.submitForm5b({}).subscribe({
+      next: (res: any) => {
+        this.submitting = false;
 
-        this.formSubmitted = true;
-
-        this.showFinalSubmitPopup = true;
-
-        setTimeout(() => {
-
-          this.router.navigate(['/layout/totalforms']);
-
-        }, 1500);
-
+        if (res?.success) {
+          this.formSubmitted = true;
+          this.showConfirmPopup = false;
+          this.showFinalSubmitPopup = true;
+        } else {
+          this.submitError = res?.message || 'சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+        }
+      },
+      error: (err: any) => {
+        this.submitting = false;
+        this.submitError = err?.error?.message || 'சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
       }
-
     });
 
+  }
+
+  // Success dialog → back to the forms list
+  finishSubmit() {
+    this.showFinalSubmitPopup = false;
+    this.router.navigate(['/layout/totalforms']);
   }
 
 }

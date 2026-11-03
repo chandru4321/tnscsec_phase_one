@@ -77,6 +77,15 @@ export class Formt7 implements OnInit {
     return total;
   }
 
+  // Polling actually held: Form7 entered with a polling date, not stopped
+  isPollingHeld(society: any): boolean {
+    return !!society.submitted_data?.polling_date && !society.submitted_data?.stop_reason;
+  }
+
+  pollingHeldCount(): number {
+    return this.societies.filter(s => this.isPollingHeld(s)).length;
+  }
+
   resolveStopName(society: any): string {
     return society.submitted_data?.stop_reason ? society.society_name : '-';
   }

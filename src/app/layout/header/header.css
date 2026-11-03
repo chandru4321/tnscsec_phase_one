@@ -104,3 +104,12 @@
     font-size: 12px;
   }
 }
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+    button,
+    .logout-btn {
+        min-height: 36px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+}

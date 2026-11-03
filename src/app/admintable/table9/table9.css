@@ -264,3 +264,224 @@
     }
 
 }
+/* Title row ("படிவம் N - title") at the left edge, so it is visible
+   without scrolling on a wide table */
+.top-header th {
+    text-align: left !important;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+    .filter-section select,
+    .filter-item select,
+    select {
+        min-height: 40px;
+        width: 100%;
+    }
+
+    .view-toggle-btn,
+    .export-btn,
+    .action-btn {
+        min-height: 40px;
+        width: 100%;
+    }
+}
+
+/* Phones: the header wraps and gets taller than the fixed 90px offset
+   used above, so let the page content flow normally under it. */
+@media (max-width: 768px) {
+    .page-content {
+        position: static !important;
+        top: auto;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        height: auto;
+        overflow: visible;
+    }
+}
+
+/* ===== படிவம் 15 layout ===== */
+.report-table {
+    min-width: 1800px !important;
+}
+
+.tick {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #15803d;
+}
+
+.col-number-cell {
+    background: #fde68a;
+    color: #78350f;
+    font-weight: 700;
+    text-align: center;
+    padding: 4px 8px;
+}
+
+.empty-table-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #d32f2f;
+}
+
+
+/* ===== Filter / action bar — same layout as admin Form 1 =====
+   Filters (label + dropdown together) on the left, buttons on the right;
+   stacked full width on phones. Appended last so it wins over older rules. */
+.table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    height: auto;
+    margin: 10px 0;
+    padding: 10px 14px;
+    background: #fff;
+    border-bottom: 1px solid #dcdcdc;
+}
+
+.table-actions .filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+    margin: 0;
+}
+
+.table-actions .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.table-actions .filter-item label {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.table-actions .filter-item select {
+    width: 240px;
+    min-width: 0;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 14px;
+}
+
+.table-actions .action-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.table-actions .action-group button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .table-actions,
+    .table-actions .filter-section,
+    .table-actions .action-group {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .table-actions .filter-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+
+    .table-actions .filter-item select {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .table-actions .action-group button {
+        width: 100%;
+        min-height: 40px;
+        white-space: normal;
+    }
+}
+
+/* same button colours on every admin page (as admin Form 1):
+   Abstract ⇄ Full List = blue, Download PDF = green */
+.table-actions .action-group .view-toggle-btn {
+    background: #dbeafe;
+    border: 1px solid #1a73e8;
+    color: #111;
+}
+
+.table-actions .action-group .view-toggle-btn:hover {
+    background: #bfdbfe;
+}
+
+.table-actions .action-group button:not(.view-toggle-btn) {
+    background: #e5f7e5;
+    border: 1px solid #4d7c0f;
+    color: #111;
+}
+
+.table-actions .action-group button:not(.view-toggle-btn):hover {
+    background: #cfeccc;
+}
+
+/* ===== Table box — always-visible scrollbars (as admin Form 1) =====
+   Height is capped so the horizontal scrollbar sits on screen (above the
+   fixed footer) instead of at the bottom of a very tall table, and the
+   scrollbar is styled so the OS doesn't auto-hide it. */
+.table-scroll-wrapper {
+    width: 100%;
+    max-height: calc(100vh - 230px);
+    overflow: auto;
+    scrollbar-width: auto;
+    scrollbar-color: #4d7c0f #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+    height: 14px;
+    width: 14px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+    background: #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #4d7c0f;
+    border-radius: 7px;
+    border: 2px solid #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #3f6212;
+}
+
+/* phones: the page scrolls normally, the table box keeps its own scrollbar */
+@media (max-width: 768px) {
+    .table-scroll-wrapper {
+        max-height: 70vh;
+    }
+}

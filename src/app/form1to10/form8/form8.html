@@ -7,7 +7,15 @@
         <!-- Header -->
         <div class="popup-header">
             <h3>{{ selectedSociety?.society_name }}</h3>
-            <span class="popup-valid-count">செல்லுபடியான வாக்குகள்: {{ selectedSociety?.valid_votes }}</span>
+            <span class="popup-valid-count">
+                செல்லுபடியான வாக்குகள்: {{ selectedSociety?.valid_votes }}
+                <!-- Remaining = valid votes − votes entered so far -->
+                <span class="remaining-box"
+                    [class.remaining-done]="getRemainingVotes() === 0"
+                    [class.remaining-over]="getRemainingVotes() < 0">
+                    மீதமுள்ள வாக்குகள்: {{ getRemainingVotes() }}
+                </span>
+            </span>
             <span class="close-btn" (click)="closePreview()">✖</span>
         </div>
 
@@ -20,7 +28,7 @@
                 <div class="member-col" *ngFor="let cat of memberCategories">
                     <h5>{{ cat.label }}</h5>
 
-                    <table class="vote-table">
+                    <table mobileCards class="vote-table">
                         <tr>
                             <th>வேட்பாளர் பெயர்</th>
                             <th>பெற்ற வாக்குகள்</th>
@@ -103,7 +111,12 @@
 
 <div class="page-bg">
 
-    <h2 class="form">படிவம் 8</h2>
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">
+        🔒 படிவம் 14 (தலைவர் தேர்தல்) சமர்ப்பிக்கப்பட்டதால், படிவம் 10-ஐ இனி திருத்த முடியாது.
+    </div>
+
+    <h2 class="form">படிவம் 10</h2>
     <h2 class="form-title">
         வாக்கு எண்ணிக்கை மற்றும் தேர்தல் முடிவுகள் விபரம்
     </h2>
@@ -128,7 +141,7 @@
     </label>
 
     <div class="f4-scroll-container">
-        <table class="f4-table">
+        <table mobileCards class="f4-table">
             <thead>
                 <tr>
                     <th class="col-sno">வ.எண்</th>
@@ -140,27 +153,29 @@
                     <th class="col-input">செல்லுபடியான வாக்குகளின் எண்ணிக்கை</th>
                     <th class="col-input">செல்லுபடியாகாத வாக்குகளின் எண்ணிக்கை</th>
                     <th class="col-btn">வாக்குப்பதிவில் போட்டியிட்ட அனைத்து வேட்பாளர்கள் பெற்ற வாக்குகளின் எண்ணிக்கை</th>
+                    <th class="col-btn">தேர்தலை நிறுத்த</th>
                 </tr>
             </thead>
 
             <tbody>
-                <tr *ngFor="let s of countingSocieties; let i = index">
+                <tr *ngFor="let s of countingSocieties; let i = index" [class.row-stopped]="s.stop_reason">
                     <td>{{ i + 1 }}</td>
 
                     <td class="name-cell">
                         {{ s.society_name }}
+                        <span class="stop-note" *ngIf="s.stop_reason">தேர்தல் நிறுத்தப்பட்டது — {{ stopLabel(s) }}</span>
                     </td>
 
                     <td>{{ s.casted_votes_count }}</td>
 
                     <td>
                         <input type="number" class="table-input" [(ngModel)]="s.ballot_box_votes"
-                            (input)="calculateInvalidVotes(s)">
+                            (input)="calculateInvalidVotes(s)" [disabled]="!!s.stop_reason">
                     </td>
 
                     <td>
                         <input type="number" class="table-input" [(ngModel)]="s.valid_votes"
-                            (input)="calculateInvalidVotes(s)">
+                            (input)="calculateInvalidVotes(s)" [disabled]="!!s.stop_reason">
                     </td>
 
                     <td>
@@ -168,18 +183,59 @@
                     </td>
 
                     <td>
-                        <button class="btn-blue" [disabled]="s.submitted" (click)="openPreviewPopup(s)">
-                            {{ s.submitted ? 'தேர்வு செய்யப்பட்டது' : 'தேர்வு செய்' }}
+                        <!-- Saved votes stay editable until the form is locked -->
+                        <button class="btn-blue" [class.btn-saved]="s.submitted" [disabled]="!!lockedMessage || !!s.stop_reason"
+                            (click)="openPreviewPopup(s)">
+                            {{ s.submitted ? '✔ சேமிக்கப்பட்டது · திருத்த' : 'தேர்வு செய்' }}
                         </button>
 
 
 
                     </td>
 
+                    <td>
+                        <button type="button" class="btn-stop" [class.is-stopped]="s.stop_reason"
+                            [disabled]="!!lockedMessage" (click)="openStop(s)">
+                            {{ s.stop_reason ? 'நிறுத்தம் திருத்த' : 'தேர்தலை நிறுத்த' }}
+                        </button>
+                    </td>
+
                 </tr>
             </tbody>
         </table>
     </div>
+
+    <!-- STOP ELECTION AT VOTE COUNTING (same reasons as Form5B / Form7) -->
+    <div class="stop-backdrop" *ngIf="stopSociety" (click)="closeStop()">
+        <div class="stop-modal" role="dialog" aria-modal="true" aria-labelledby="f10-stop-title" (click)="$event.stopPropagation()">
+            <div class="stop-modal-header">
+                <h3 id="f10-stop-title">தேர்தலை நிறுத்த</h3>
+                <button type="button" class="stop-close" (click)="closeStop()" aria-label="Close">×</button>
+            </div>
+            <p class="stop-society">{{ stopSociety.society_name }}</p>
+
+            <select class="reason-dropdown" [(ngModel)]="stopReason" name="f10StopReason">
+                <option value="" disabled selected hidden>காரணம் தேர்வு செய்யவும்</option>
+                <option *ngFor="let r of reasonOptions" [value]="r.value">{{ r.label }}</option>
+            </select>
+
+            <textarea *ngIf="stopReason === 'other'" class="other-reason-box" [(ngModel)]="stopOtherReasonText"
+                name="f10StopOther" maxlength="555"
+                placeholder="காரணத்தை உள்ளிடவும் (அதிகபட்சம் 555 எழுத்துகள்)"></textarea>
+
+            <p class="stop-hint">படிவம் சமர்ப்பிக்கும் / திருத்தம் சேமிக்கும் போது சேமிக்கப்படும். நிறுத்தப்பட்ட சங்கம் படிவம் 14-ல் வராது.</p>
+
+            <div class="stop-modal-footer">
+                <button type="button" class="btn-grey" *ngIf="stopSociety.stop_reason" (click)="cancelStop()">நிறுத்தத்தை நீக்க</button>
+                <button type="button" class="btn-grey" (click)="closeStop()">ரத்து</button>
+                <button type="button" class="btn-stop" (click)="saveStop()">நிறுத்த</button>
+            </div>
+        </div>
+    </div>
+
     <div class="form8-action-bar">
         <button class="btn-grey" (click)="onCancel()">ரத்து செய்</button>
-        <button class="btn-blue" (click)="onSubmitForm8()">சமர்ப்பிக்க</button>
+        <!-- Locked once Form 15 is submitted — nothing can be saved then -->
+        <button class="btn-blue" *ngIf="!lockedMessage" (click)="onSubmitForm8()">
+            {{ isEditMode ? 'திருத்தம் சேமிக்க (Update)' : 'சமர்ப்பிக்க' }}
+        </button>

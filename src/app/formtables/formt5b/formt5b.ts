@@ -14,7 +14,7 @@ interface TableRow {
   dec_general: number;
   dec_total: number;
 
-  // Group 4 — rejected during scrutiny (only when this society had any)
+  // Group 4 — rejected during scrutiny (every society, 0s included)
   rejected_society_name: string;
   rej_sc: number;
   rej_women: number;
@@ -126,7 +126,8 @@ export class Formt5b implements OnInit {
       dec_general: declared.general || 0,
       dec_total: declared.total || 0,
 
-      rejected_society_name: rejTotal > 0 ? (soc.society_name || '-') : '-',
+      // Every society is listed here, even with 0 rejections in all categories
+      rejected_society_name: soc.society_name || '-',
       rej_sc: rejSc,
       rej_women: rejWomen,
       rej_general: rejGeneral,

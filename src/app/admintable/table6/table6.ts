@@ -13,65 +13,115 @@ interface TableRow {
   district_name: string;
   zone_name: string;
 
-  society_name: string;
-  dec_sc_names: string;
-  dec_women_names: string;
-  dec_general_names: string;
-  dec_total: number;
+  // Total committee members to be elected (Form4 seats)
+  seat_sc: number;
+  seat_women: number;
+  seat_general: number;
+  seat_total: number;
 
   count_society_name: string;
-  count_sc: number;
-  count_women: number;
-  count_general: number;
-  count_total: number;
+  count_sc: number | string;
+  count_women: number | string;
+  count_general: number | string;
+  count_total: number | string;
 
   w_society_name: string;
-  w_sc: number;
-  w_women: number;
-  w_general: number;
-  w_total: number;
+  w_sc: number | string;
+  w_women: number | string;
+  w_general: number | string;
+  w_total: number | string;
+
+  // Final qualified count = qualified − withdrawn
+  fin_society_name: string;
+  fin_sc: number | string;
+  fin_women: number | string;
+  fin_general: number | string;
+  fin_total: number | string;
 
   eq_society_name: string;
-  eq_sc: number;
-  eq_women: number;
-  eq_general: number;
-  eq_total: number;
+  eq_sc: number | string;
+  eq_women: number | string;
+  eq_general: number | string;
+  eq_total: number | string;
 
   less_society_name: string;
-  less_sc: number;
-  less_women: number;
-  less_general: number;
-  less_total: number;
+  less_sc: number | string;
+  less_women: number | string;
+  less_general: number | string;
+  less_total: number | string;
 
   declared_society_name: string;
-  declared_sc: number;
-  declared_women: number;
-  declared_general: number;
-  declared_total: number;
+  declared_sc: number | string;
+  declared_women: number | string;
+  declared_general: number | string;
+  declared_total: number | string;
 
   final_society_name: string;
-  final_sc: number;
-  final_women: number;
-  final_general: number;
-  final_total: number;
+  final_sc: number | string;
+  final_women: number | string;
+  final_general: number | string;
+  final_total: number | string;
 
   stopped_society_name: string;
   stop_reason_display: string;
 
   rowSpan?: number;
+  serial?: number;
 }
 
-// District/zone-wise summary — societies counted by their election
-// outcome (qualified for polling / unopposed / unqualified), matching the
-// groups shown in the Full List.
+// One count group of the abstract: number of societies plus the candidate
+// counts (ப.இ./ப.கு, மகளிர், பொது, மொத்தம்) summed over those societies.
+interface AbstractBucket {
+  soc: number;
+  sc: number;
+  women: number;
+  general: number;
+  total: number;
+}
+
+// District/zone-wise summary — same column groups (4 to 12) as the Full
+// List, with each group's societies counted and candidate counts summed.
 interface AbstractRow {
   district_name: string;
   zone_name: string;
-  society_count: number;
-  qualified_count: number;
-  unopposed_count: number;
-  unqualified_count: number;
+  zone_count: number;
+  seats: AbstractBucket;     // 4  committee seats (Form4) — soc unused
+  count: AbstractBucket;     // 5  qualified nominations
+  w: AbstractBucket;         // 6  withdrawn
+  fin: AbstractBucket;       // 7  final qualified count (5 − 6)
+  eq: AbstractBucket;        // 8  unopposed (equal)
+  less: AbstractBucket;      // 9  no election (less)
+  declared: AbstractBucket;  // 10 declared elected unopposed
+  final: AbstractBucket;     // 11 polling required
+  stopped: number;           // 12 stopped societies
 }
+
+const emptyBucket = (): AbstractBucket => ({ soc: 0, sc: 0, women: 0, general: 0, total: 0 });
+
+const emptyAbstractRow = (district_name = '', zone_name = '', zone_count = 0): AbstractRow => ({
+  district_name,
+  zone_name,
+  zone_count,
+  seats: emptyBucket(),
+  count: emptyBucket(),
+  w: emptyBucket(),
+  fin: emptyBucket(),
+  eq: emptyBucket(),
+  less: emptyBucket(),
+  declared: emptyBucket(),
+  final: emptyBucket(),
+  stopped: 0
+});
+
+const addToBucket = (b: AbstractBucket, sc: number, women: number, general: number, total: number, countSociety = true): void => {
+  if (countSociety) b.soc += 1;
+  b.sc += sc;
+  b.women += women;
+  b.general += general;
+  b.total += total;
+};
+
+const BUCKET_KEYS = ['count', 'w', 'fin', 'eq', 'less', 'declared', 'final'] as const;
 
 @Component({
   selector: 'app-table6',
@@ -87,14 +137,10 @@ export class Table6 implements OnInit {
   abstractRows: AbstractRow[] = [];
   viewMode: 'full' | 'abstract' = 'full';
 
-  grandTotal: AbstractRow = {
-    district_name: '',
-    zone_name: '',
-    society_count: 0,
-    qualified_count: 0,
-    unopposed_count: 0,
-    unqualified_count: 0
-  };
+  grandTotal: AbstractRow = emptyAbstractRow();
+
+  // Abstract groups 5–11, each shown as சங்கங்கள் / ப.இ./ப.கு / மகளிர் / பொது / மொத்தம்
+  readonly fiveColumnGroups = ['count', 'w', 'fin', 'eq', 'less', 'declared', 'final'] as const;
 
   selectedDepartment = '';
   selectedDistrict = '';
@@ -115,16 +161,9 @@ export class Table6 implements OnInit {
     const forms = apiData.data || [];
 
     const rows: TableRow[] = [];
-    const abstractGroups = new Map<string, {
-      district_name: string;
-      zone_name: string;
-      societyNames: Set<string>;
-      qualified: number;
-      unopposed: number;
-      unqualified: number;
-    }>();
+    const abstractGroups = new Map<string, AbstractRow>();
 
-    forms.forEach((item: any) => {
+    forms.forEach((item: any, formIndex: number) => {
 
       const district = item.district_name || '-';
       const zone = item.zone_name || '-';
@@ -148,6 +187,13 @@ export class Table6 implements OnInit {
         const isDeclaredUnopposed =
           isUnopposed || (isUnqualified && meetsPartialThreshold);
 
+        // A society stopped entirely within Form6 belongs ONLY in the
+        // "தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்" group. The backend also sets
+        // its election_status to UNQUALIFIED, so without this guard it
+        // would ALSO show up (with 0s) under the unqualified group — this
+        // keeps every other group blank for a stopped row.
+        const isStopped = soc.election_action === 'STOP';
+
         const wSc = soc.withdrawn_counts?.sc_st || 0;
         const wWomen = soc.withdrawn_counts?.women || 0;
         const wGeneral = soc.withdrawn_counts?.general || 0;
@@ -158,98 +204,132 @@ export class Table6 implements OnInit {
           district_name: district,
           zone_name: zone,
 
-          society_name: soc.society_name || '-',
-          dec_sc_names: (soc.final_scst_names || []).join(', ') || '-',
-          dec_women_names: (soc.final_women_names || []).join(', ') || '-',
-          dec_general_names: (soc.final_general_names || []).join(', ') || '-',
-          dec_total:
+          // "மொத்த நிர்வாகக்குழு உறுப்பினர்களின் எண்ணிக்கை" — the
+          // society's committee seats as entered in Form4
+          seat_sc: soc.rural_sc_st || 0,
+          seat_women: soc.rural_women || 0,
+          seat_general: soc.rural_general || 0,
+          seat_total: soc.rural_total || 0,
+
+          // "தகுதிபெற்ற வேட்பு மனுக்கள் பட்டியல்படி..." = the valid-
+          // nominations count BEFORE Form6 withdrawal (withdrawals are
+          // subtracted separately in the next column group), so this must
+          // add back wSc/wWomen/wGeneral — final_*_names already excludes
+          // withdrawn candidates.
+          count_society_name: isStopped ? '-' : (soc.society_name || '-'),
+          count_sc: isStopped ? '-' : (soc.final_scst_names?.length || 0) + wSc,
+          count_women: isStopped ? '-' : (soc.final_women_names?.length || 0) + wWomen,
+          count_general: isStopped ? '-' : (soc.final_general_names?.length || 0) + wGeneral,
+          count_total: isStopped ? '-' :
+            (soc.final_scst_names?.length || 0) +
+            (soc.final_women_names?.length || 0) +
+            (soc.final_general_names?.length || 0) +
+            wTotal,
+
+          w_society_name: !isStopped ? (soc.society_name || '-') : '-',
+          w_sc: isStopped ? '-' : wSc,
+          w_women: isStopped ? '-' : wWomen,
+          w_general: isStopped ? '-' : wGeneral,
+          w_total: isStopped ? '-' : wTotal,
+
+          // Column 4 − Column 5: the final candidate list (withdrawn
+          // candidates are already excluded from final_*_names)
+          fin_society_name: isStopped ? '-' : (soc.society_name || '-'),
+          fin_sc: isStopped ? '-' : (soc.final_scst_names?.length || 0),
+          fin_women: isStopped ? '-' : (soc.final_women_names?.length || 0),
+          fin_general: isStopped ? '-' : (soc.final_general_names?.length || 0),
+          fin_total: isStopped ? '-' :
             (soc.final_scst_names?.length || 0) +
             (soc.final_women_names?.length || 0) +
             (soc.final_general_names?.length || 0),
 
-          count_society_name: soc.society_name || '-',
-          count_sc: soc.final_scst_names?.length || 0,
-          count_women: soc.final_women_names?.length || 0,
-          count_general: soc.final_general_names?.length || 0,
-          count_total:
-            (soc.final_scst_names?.length || 0) +
-            (soc.final_women_names?.length || 0) +
-            (soc.final_general_names?.length || 0),
+          eq_society_name: (!isStopped && isUnopposed) ? (soc.society_name || '-') : '-',
+          eq_sc: (!isStopped && isUnopposed) ? (soc.final_sc_st || 0) : '-',
+          eq_women: (!isStopped && isUnopposed) ? (soc.final_women || 0) : '-',
+          eq_general: (!isStopped && isUnopposed) ? (soc.final_general || 0) : '-',
+          eq_total: (!isStopped && isUnopposed) ? (soc.final_total || 0) : '-',
 
-          w_society_name: wTotal > 0 ? (soc.society_name || '-') : '-',
-          w_sc: wSc,
-          w_women: wWomen,
-          w_general: wGeneral,
-          w_total: wTotal,
+          less_society_name: (!isStopped && isUnqualified) ? (soc.society_name || '-') : '-',
+          less_sc: (!isStopped && isUnqualified) ? (soc.final_sc_st || 0) : '-',
+          less_women: (!isStopped && isUnqualified) ? (soc.final_women || 0) : '-',
+          less_general: (!isStopped && isUnqualified) ? (soc.final_general || 0) : '-',
+          less_total: (!isStopped && isUnqualified) ? (soc.final_total || 0) : '-',
 
-          eq_society_name: isUnopposed ? (soc.society_name || '-') : '-',
-          eq_sc: isUnopposed ? (soc.final_sc_st || 0) : 0,
-          eq_women: isUnopposed ? (soc.final_women || 0) : 0,
-          eq_general: isUnopposed ? (soc.final_general || 0) : 0,
-          eq_total: isUnopposed ? (soc.final_total || 0) : 0,
+          declared_society_name: (!isStopped && isDeclaredUnopposed) ? (soc.society_name || '-') : '-',
+          declared_sc: (!isStopped && isDeclaredUnopposed) ? (soc.final_sc_st || 0) : '-',
+          declared_women: (!isStopped && isDeclaredUnopposed) ? (soc.final_women || 0) : '-',
+          declared_general: (!isStopped && isDeclaredUnopposed) ? (soc.final_general || 0) : '-',
+          declared_total: (!isStopped && isDeclaredUnopposed) ? (soc.final_total || 0) : '-',
 
-          less_society_name: isUnqualified ? (soc.society_name || '-') : '-',
-          less_sc: isUnqualified ? (soc.final_sc_st || 0) : 0,
-          less_women: isUnqualified ? (soc.final_women || 0) : 0,
-          less_general: isUnqualified ? (soc.final_general || 0) : 0,
-          less_total: isUnqualified ? (soc.final_total || 0) : 0,
+          final_society_name: (!isStopped && isQualified) ? (soc.society_name || '-') : '-',
+          final_sc: (!isStopped && isQualified) ? (soc.final_sc_st || 0) : '-',
+          final_women: (!isStopped && isQualified) ? (soc.final_women || 0) : '-',
+          final_general: (!isStopped && isQualified) ? (soc.final_general || 0) : '-',
+          final_total: (!isStopped && isQualified) ? (soc.final_total || 0) : '-',
 
-          declared_society_name: isDeclaredUnopposed ? (soc.society_name || '-') : '-',
-          declared_sc: isDeclaredUnopposed ? (soc.final_sc_st || 0) : 0,
-          declared_women: isDeclaredUnopposed ? (soc.final_women || 0) : 0,
-          declared_general: isDeclaredUnopposed ? (soc.final_general || 0) : 0,
-          declared_total: isDeclaredUnopposed ? (soc.final_total || 0) : 0,
-
-          final_society_name: isQualified ? (soc.society_name || '-') : '-',
-          final_sc: isQualified ? (soc.final_sc_st || 0) : 0,
-          final_women: isQualified ? (soc.final_women || 0) : 0,
-          final_general: isQualified ? (soc.final_general || 0) : 0,
-          final_total: isQualified ? (soc.final_total || 0) : 0,
-
-          // NOTE: backend doesn't yet track a structured stop reason for
-          // Form6 — these stay '-' until that's added, matching Form5B's
-          // stop_reason field.
-          stopped_society_name: '-',
-          stop_reason_display: '-',
+          // A society stopped entirely within Form6 (as opposed to an
+          // individual candidate withdrawal) carries election_action
+          // "STOP" and a free-text remark — surface both here.
+          stopped_society_name: isStopped ? (soc.society_name || '-') : '-',
+          stop_reason_display: isStopped ? (soc.remark || '-') : '-',
 
           rowSpan: undefined
         });
 
+        // Abstract: add this society to the same groups it fills in the
+        // Full List row above, so each abstract cell is the sum of that
+        // Full List column for the district/zone.
         const abstractKey = `${district}||${zone}`;
         if (!abstractGroups.has(abstractKey)) {
-          abstractGroups.set(abstractKey, {
-            district_name: district,
-            zone_name: zone,
-            societyNames: new Set<string>(),
-            qualified: 0,
-            unopposed: 0,
-            unqualified: 0
-          });
+          abstractGroups.set(abstractKey, emptyAbstractRow(district, zone, 1));
         }
         const ag = abstractGroups.get(abstractKey)!;
-        ag.societyNames.add(soc.society_name || '-');
-        if (isQualified) ag.qualified += 1;
-        else if (isUnopposed) ag.unopposed += 1;
-        else if (isUnqualified) ag.unqualified += 1;
+
+        const decSc = soc.final_scst_names?.length || 0;
+        const decWomen = soc.final_women_names?.length || 0;
+        const decGeneral = soc.final_general_names?.length || 0;
+
+        // Committee seats count for every society, stopped ones included
+        addToBucket(ag.seats, soc.rural_sc_st || 0, soc.rural_women || 0,
+          soc.rural_general || 0, soc.rural_total || 0);
+
+        if (isStopped) {
+          ag.stopped += 1;
+        } else {
+          const fSc = soc.final_sc_st || 0;
+          const fWomen = soc.final_women || 0;
+          const fGeneral = soc.final_general || 0;
+          const fTotal = soc.final_total || 0;
+
+          if (isQualified) addToBucket(ag.final, fSc, fWomen, fGeneral, fTotal);
+
+          addToBucket(ag.count, decSc + wSc, decWomen + wWomen, decGeneral + wGeneral,
+            decSc + decWomen + decGeneral + wTotal);
+
+          addToBucket(ag.w, wSc, wWomen, wGeneral, wTotal, wTotal > 0);
+
+          addToBucket(ag.fin, decSc, decWomen, decGeneral, decSc + decWomen + decGeneral);
+
+          if (isUnopposed) addToBucket(ag.eq, fSc, fWomen, fGeneral, fTotal);
+          if (isUnqualified) addToBucket(ag.less, fSc, fWomen, fGeneral, fTotal);
+          if (isDeclaredUnopposed) addToBucket(ag.declared, fSc, fWomen, fGeneral, fTotal);
+        }
 
       });
 
       if (rows.length > groupStartIndex) {
         rows[groupStartIndex].rowSpan = rows.length - groupStartIndex;
+        // வ.எண் numbers each district/zone GROUP (1, 2, 3, ...), not every
+        // flattened society row — otherwise the second group would start
+        // at however many society rows the first group had, not "2".
+        rows[groupStartIndex].serial = formIndex + 1;
       }
 
     });
 
     this.tableRows = rows;
 
-    this.abstractRows = Array.from(abstractGroups.values()).map(g => ({
-      district_name: g.district_name,
-      zone_name: g.zone_name,
-      society_count: g.societyNames.size,
-      qualified_count: g.qualified,
-      unopposed_count: g.unopposed,
-      unqualified_count: g.unqualified
-    }));
+    this.abstractRows = Array.from(abstractGroups.values());
 
     this.computeGrandTotal();
 
@@ -257,20 +337,22 @@ export class Table6 implements OnInit {
 
   private computeGrandTotal(): void {
 
-    const totals: AbstractRow = {
-      district_name: '',
-      zone_name: '',
-      society_count: 0,
-      qualified_count: 0,
-      unopposed_count: 0,
-      unqualified_count: 0
-    };
+    const totals = emptyAbstractRow();
 
     this.abstractRows.forEach(a => {
-      totals.society_count += a.society_count;
-      totals.qualified_count += a.qualified_count;
-      totals.unopposed_count += a.unopposed_count;
-      totals.unqualified_count += a.unqualified_count;
+      totals.zone_count += a.zone_count;
+      totals.stopped += a.stopped;
+      totals.seats.sc += a.seats.sc;
+      totals.seats.women += a.seats.women;
+      totals.seats.general += a.seats.general;
+      totals.seats.total += a.seats.total;
+      BUCKET_KEYS.forEach(k => {
+        totals[k].soc += a[k].soc;
+        totals[k].sc += a[k].sc;
+        totals[k].women += a[k].women;
+        totals[k].general += a[k].general;
+        totals[k].total += a[k].total;
+      });
     });
 
     this.grandTotal = totals;

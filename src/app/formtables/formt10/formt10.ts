@@ -1,125 +1,45 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import * as XLSX from 'xlsx';
+import { ActivatedRoute } from '@angular/router';
 import { saveAs } from 'file-saver';
 import { UserService } from '../../services/user';
+import { Form14Part, Form14Table } from '../../shared/form14-table/form14-table';
 
+// படிவம் 15 (a) at /Formt10 and 15 (b) at /formt10b — the route's data.part
+// picks which half of the vice-president election table is shown.
 @Component({
   selector: 'app-formt10',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, Form14Table],
   templateUrl: './formt10.html',
   styleUrls: ['./formt10.css']
 })
 export class Formt10 implements OnInit {
 
+  part: Form14Part = 'a';
   department_name = '';
-  tableRows: any[] = [];
+  forms: any[] = [];
 
-  constructor(private userService: UserService) { }
+  constructor(private userService: UserService, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
+    this.part = this.route.snapshot.data?.['part'] === 'b' ? 'b' : 'a';
     this.loadForm10();
   }
 
-  private maskAadhar(aadhar: string): string {
-    return aadhar ? 'xxxx xxxx ' + aadhar.slice(-4) : '';
-  }
-
-  // Joins a list of candidates into "NAME - xxxx xxxx 1234, NAME - ..."
-  // — built from the candidate objects directly since the backend's
-  // plain "*_member_names" string doesn't carry the Aadhaar number.
-  private namesWithAadhar(candidates: any[]): string {
-    return (candidates || [])
-      .map((c: any) => c.member_name
-        ? `${c.member_name} - ${this.maskAadhar(c.aadhar_no)}`
-        : null)
-      .filter(Boolean)
-      .join(',   ') || '-';
-  }
-
-  private resolveElectionType(soc: any): string {
-    return soc.table7_vice_president?.election_type || soc.election_type || '-';
-  }
-
   loadForm10(): void {
-
     this.userService.getForm10List().subscribe(res => {
-
-      if (!res?.success || !res.data?.length) return;
-
-      const rows: any[] = [];
-      const addedSocieties = new Set<number>();
-
-      res.data.forEach((form: any) => {
-
-        const department = form.department?.name || '';
-        const district = form.district?.name || '';
-        const zone = form.zone?.name || '';
-
-        this.department_name = department;
-
-        // District/zone merge across every society row belonging to this
-        // form — dedup above can skip societies, so the actual row count
-        // per form is only known after the loop, not from societies.length.
-        const startIndex = rows.length;
-
-        form.societies?.forEach((soc: any) => {
-
-          if (addedSocieties.has(soc.society_id)) {
-            return;
-          }
-
-          addedSocieties.add(soc.society_id);
-
-          rows.push({
-            district_name: district,
-            zone_name: zone,
-            society_name: soc.society_name || '-',
-
-            // Filed candidate names (with masked Aadhaar)
-            filed_names: this.namesWithAadhar(soc.filed_members?.all || soc.table1_candidates || soc.candidates),
-
-            // Rejected candidate names (with masked Aadhaar)
-            rejected_names: this.namesWithAadhar(soc.rejected_members?.all || soc.table3_candidates),
-
-            // Withdrawn candidate names (with masked Aadhaar)
-            withdrawn_names: this.namesWithAadhar(soc.withdrawn_members?.all || soc.table5_candidates),
-
-            // Final eligible candidate names (with masked Aadhaar)
-            eligible_names: this.namesWithAadhar(soc.eligible_members?.all || soc.table6_candidates),
-
-            // Election method
-            election_type: this.resolveElectionType(soc)
-          });
-        });
-
-        if (rows.length > startIndex) {
-          (rows[startIndex] as any).rowSpan = rows.length - startIndex;
-        }
-      });
-
-      this.tableRows = rows;
+      this.forms = res?.success ? (res.data || []) : [];
+      this.department_name = this.forms[0]?.department?.name || '';
     });
   }
 
-
   downloadPdf(): void {
-
-    const departmentId = 2;
-
-    this.userService.getForm10Pdf(departmentId).subscribe(
-      (res: Blob) => {
-
-        saveAs(
-          new Blob([res], { type: 'application/pdf' }),
-          'Form10_Report.pdf'
-        );
-
-      },
-      error => {
-        console.error('PDF download error:', error);
-      }
-    );
+    // No department filter: the backend uses the logged-in user's own data,
+    // the same rows this table shows.
+    this.userService.getForm10Pdf(undefined, undefined, this.part).subscribe({
+      next: (res: Blob) => saveAs(new Blob([res], { type: 'application/pdf' }), `Form15${this.part}_Report.pdf`),
+      error: err => console.error('PDF download error:', err)
+    });
   }
 }

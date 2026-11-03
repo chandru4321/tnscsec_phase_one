@@ -1,7 +1,10 @@
 <div class="page-bg">
 
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
+
     <h2 class="form-title">படிவம் 4</h2>
-    <div class="form-subtitle">வேட்புமனு தாக்கல் பற்றிய விபரங்கள்</div>
+    <div class="form-subtitle">வேட்புமனு தாக்கல் பற்றிய விபரம்</div>
 
     <!-- F1 & F2 -->
     <div class="row">
@@ -51,20 +54,16 @@
 
             <div class="f4-name">✔ {{ soc.society_name }}</div>
 
-            <!-- MANUAL INPUTS -->
-            <div class="f4-input-group">
-                <span class="f4-label">ப.தி./ப.கு</span>
-                <input type="number" class="f4-input" min="0" [(ngModel)]="soc.declared_sc_st" />
-            </div>
-
-            <div class="f4-input-group">
-                <span class="f4-label">மகளிர்</span>
-                <input type="number" class="f4-input" min="0" [(ngModel)]="soc.declared_women" />
-            </div>
-
-            <div class="f4-input-group">
-                <span class="f4-label">பொது</span>
-                <input type="number" class="f4-input" min="0" [(ngModel)]="soc.declared_general" />
+            <!-- MANUAL INPUTS — a category with 0 seats above is locked at 0 -->
+            <div class="f4-field" *ngFor="let c of categories">
+                <div class="f4-input-group">
+                    <span class="f4-label">{{ c.label }}</span>
+                    <input type="number" class="f4-input" min="0" [(ngModel)]="soc[c.declared]"
+                        [readonly]="noSeats(soc, c)" [class.f4-input-locked]="noSeats(soc, c)" />
+                </div>
+                <span class="f4-zero-note" *ngIf="noSeats(soc, c)">
+                    ⚠ இப்பிரிவில் இடங்கள் 0 — போட்டி இல்லை
+                </span>
             </div>
 
             <!-- STOPPED -->

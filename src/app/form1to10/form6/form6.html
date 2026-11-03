@@ -49,7 +49,14 @@
             <button class="close-btn" (click)="closeStop()">×</button>
         </div>
 
-        <textarea [(ngModel)]="stopRemark" placeholder="தேர்தல் நிறுத்தக் குறிப்பு"></textarea>
+        <select class="reason-dropdown" [(ngModel)]="stopReason" name="stopReason">
+            <option value="" disabled selected hidden>காரணம் தேர்வு செய்யவும்</option>
+            <option *ngFor="let r of reasonOptions" [value]="r.value">{{ r.label }}</option>
+        </select>
+
+        <textarea *ngIf="stopReason === 'other'" class="other-reason-box" [(ngModel)]="stopOtherReasonText"
+            name="stopOtherReasonText" maxlength="555"
+            placeholder="காரணத்தை உள்ளிடவும் (அதிகபட்சம் 555 எழுத்துகள்)"></textarea>
 
         <div class="modal-footer">
             <button class="btn-grey" (click)="closeStop()">ரத்து செய்</button>
@@ -65,9 +72,12 @@
 
 <div class="page-bg">
 
-    <h2 class="form">படிவம் 6</h2>
+    <!-- Locked: the next form is already submitted, so this form cannot be edited -->
+    <div class="locked-banner" *ngIf="lockedMessage">🔒 {{ lockedMessage }}</div>
+
+    <h2 class="form">படிவம் 7</h2>
     <h2 class="form-title">
-        வேட்புமனு தாக்கல் செய்த உறுப்பினர்களின் பெயர் மற்றும் விபரம்
+        வேட்புமனு திரும்பப் பெறுதல் மற்றும் போட்டியிடும் வேட்பாளர் இறுதிப் பட்டியல் பற்றிய எண்ணிக்கை விவரங்கள்
     </h2>
 
 
@@ -89,7 +99,7 @@
     </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -126,7 +136,7 @@
     </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -167,7 +177,7 @@
     </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -215,7 +225,7 @@
     </label>
 
     <div class="table-box">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -248,7 +258,7 @@
         இருப்பதால் தேர்தலில் போட்டியில்லாத சங்கங்கள் விபரம் </label>
 
     <div class="table-box" *ngIf="f5List.length; else f5Empty">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -290,7 +300,7 @@
         தேர்தல் இல்லாத சங்கங்கள் விபரம் </label>
 
     <div class="table-box" *ngIf="f6List.length; else f6Empty">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -330,7 +340,7 @@
     </label>
 
     <div class="table-box" *ngIf="f7List.length; else f7Empty">
-        <table>
+        <table mobileCards>
             <thead>
                 <tr>
                     <th>வ.எண்</th>
@@ -366,23 +376,6 @@
 
 
     <!-- ================= VIEW POPUP (LAST) ================= -->
-
-    <!-- ================= STOP POPUP ================= -->
-    <div class="modal-backdrop" *ngIf="showStopPopup">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3>தேர்தலை நிறுத்த</h3>
-                <button class="close-btn" (click)="closeStop()">×</button>
-            </div>
-
-            <textarea [(ngModel)]="stopRemark" placeholder="தேர்தல் நிறுத்தக் குறிப்பு"></textarea>
-
-            <div class="modal-footer">
-                <button class="btn-grey" (click)="closeStop()">ரத்து செய்</button>
-                <button class="btn-red" (click)="submitStop()">சமர்ப்பிக்க</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ================= PAGE =================
     <div class="page-bg">
@@ -441,7 +434,7 @@
         </button>
     </div> -->
     <!-- ================= FINAL SUBMIT BAR ================= -->
-    <div class="final-submit-bar-right" *ngIf="!form6Submitted">
+    <div class="final-submit-bar-right" *ngIf="!form6Submitted && !isEditMode">
         <button class="btn-blue" (click)="submitForm6Final()">
             சமர்ப்பிக்க
         </button>

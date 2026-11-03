@@ -1,0 +1,11 @@
+/* Base styles from form8names.css / form8counts.css; extras here */
+
+.office-table {
+    min-width: 2200px;
+}
+
+.person-cell {
+    min-width: 110px;
+    white-space: nowrap;
+    line-height: 1.6;
+}

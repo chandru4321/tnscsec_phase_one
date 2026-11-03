@@ -2,45 +2,66 @@
 
     <div class="filter-section">
 
-        <label>Department:</label>
+        <div class="filter-item">
+            <label>Department:</label>
 
-        <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
+            <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
 
-            <option value="">All</option>
+                <option value="">All</option>
 
-            <option *ngFor="let d of departmentList" [value]="d.name">
+                <option *ngFor="let d of departmentList" [value]="d.name">
 
-                {{ d.name }}
+                    {{ d.name }}
 
-            </option>
+                </option>
 
-        </select>
+            </select>
+        </div>
 
-        <label>District:</label>
+        <div class="filter-item">
+            <label>District:</label>
 
-        <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
+            <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
 
-            <option value="">All</option>
+                <option value="">All</option>
 
-            <option *ngFor="let d of districtList" [value]="d.name">
+                <option *ngFor="let d of districtList" [value]="d.name">
 
-                {{ d.name }}
+                    {{ d.name }}
 
-            </option>
+                </option>
 
-        </select>
+            </select>
+        </div>
 
     </div>
 
-    <button class="export-btn" (click)="downloadPdf()">
+    <div class="action-group">
+        <button class="view-toggle-btn" (click)="toggleViewMode()">
+            {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+        </button>
 
-        📄 Download PDF
+        <button class="export-btn" (click)="downloadPdf()">
 
-    </button>
+            📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+
+        </button>
+    </div>
 
 </div>
 
-<div class="table-scroll-wrapper">
+<!-- ABSTRACT (DISTRICT/ZONE-WISE SUMMARY) -->
+<!-- FORM HEADING (above the table) -->
+<h2 class="form-heading">படிவம் 10</h2>
+<div class="table-source">அட்டவணை 10 (பதிவு படிவம் 10-லிருந்து)</div>
+
+<app-abstract-table *ngIf="viewMode === 'abstract'"
+    formNumber="படிவம் 10" [title]="title" [department]="selectedDepartment || department_name || 'அனைத்தும்'"
+    [groups]="abstractGroups" [rows]="abstractRows">
+</app-abstract-table>
+
+<!-- FULL LIST -->
+<div class="table-scroll-wrapper" *ngIf="viewMode === 'full'">
     <table class="report-table" id="reportTable">
 
         <thead>
@@ -48,14 +69,14 @@
             <!-- TITLE -->
             <tr class="top-header">
                 <th colspan="32">
-                    வேட்புமனு திரும்ப பெறுதல் மற்றும் இறுதி போட்டியிடும் வேட்பாளர்கள் பற்றிய முழு விவரங்கள்
+                    படிவம் 10 &nbsp;-&nbsp; {{ title }}
                 </th>
             </tr>
 
             <!-- DEPARTMENT -->
             <tr class="top-sub-header">
                 <th colspan="32">
-                    துறை --{{department_name}}
+                    துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                 </th>
             </tr>
 
@@ -79,6 +100,7 @@
 
                 <!-- <th rowspan="2" class="col-medium">வாக்கு எண்ணிக்கை நடைபெற்ற சங்கங்களின்<br> எண்ணிக்கை</th>
                     <th rowspan="2" class="col-medium">வாக்கு எண்ணிக்கை நிறுத்தப்பட்ட<br> சங்கங்கள்</th> -->
+                <th rowspan="2" class="col-wide">வாக்கு எண்ணிக்கையின் போது தேர்தல் நிறுத்தப்பட்ட சங்கத்தின் பெயர் மற்றும் காரணம்</th>
                 <th rowspan="2" class="col-medium">குறிப்பு</th>
 
 
@@ -131,5 +153,6 @@
             <td>{{ r.general_count }}</td>
             <td>{{ r.total_count }}</td>
 
+            <td class="text-left">{{ r.stopped }}</td>
             <td>{{ r.remarks }}</td>
         </tr>

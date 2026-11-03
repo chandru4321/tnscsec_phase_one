@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { inject, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user';
 import { Router, RouterLink, RouterModule } from '@angular/router';
+import { lockedMessageFrom } from '../../shared/form-lock';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-form4',
@@ -12,6 +14,12 @@ import { Router, RouterLink, RouterModule } from '@angular/router';
   styleUrls: ['./form4.css']
 })
 export class Form4 implements OnInit {
+
+  // Success / error / warning popup (replaces alert())
+  private dialog = inject(DialogService);
+
+  // Set when the edit API says this form is locked (shown as a banner)
+  lockedMessage = '';
 
   department_id = 0;
   district_id = 0;
@@ -34,6 +42,13 @@ export class Form4 implements OnInit {
     { value: 'election_cancelled_by_commission', label: 'ஆணையத்தால் தேர்தல் ரத்து' },
     { value: 'insufficient_candidates', label: 'சிற்றெண் குறைவு' },
     { value: 'other', label: 'இதர காரணங்கள்' }
+  ];
+
+  // F3 seat field → F4 declared-candidates field, per category
+  readonly categories = [
+    { label: 'ப.தி./ப.கு', seats: 'sc_st', declared: 'declared_sc_st' },
+    { label: 'மகளிர்', seats: 'women', declared: 'declared_women' },
+    { label: 'பொது', seats: 'general', declared: 'declared_general' }
   ];
 
   constructor(private userService: UserService, private router: Router
@@ -178,7 +193,9 @@ export class Form4 implements OnInit {
         this.updateLists();
       },
 
-      error: () => {
+      error: (err: any) => {
+        // Locked (next form already submitted) → show it on the page
+        this.lockedMessage = lockedMessageFrom(err);
 
         console.log('No editable Form4 found');
 
@@ -244,13 +261,31 @@ export class Form4 implements OnInit {
     // items, so a copy here would silently lose every edit on submit.
     this.selectedSocietyList = this.societyList.filter(s => s.selected);
     this.unselectedSocietyList = this.societyList.filter(s => !s.selected);
+
+    // No seats in a category → no contest there, so its count is always 0
+    this.societyList.forEach(s =>
+      this.categories.forEach(c => { if (this.noSeats(s, c)) s[c.declared] = 0; }));
+  }
+
+  /** True when the society has 0 seats for this category in F3 */
+  noSeats(soc: any, c: { seats: string }): boolean {
+    return Number(soc[c.seats]) === 0;
   }
 
   /* ============== FINAL SUBMIT ============== */
   submit() {
 
     if (!this.selectedSocietyList.length) {
-      alert('Please select at least one society');
+      this.dialog.show('Please select at least one society');
+      return;
+    }
+
+    // Every not-filed society needs its reason — the stoppage reports
+    // (படிவம் 12 / 13) place it in a column by this reason.
+    const noReason = this.unselectedSocietyList.find(s =>
+      !s.reason || (s.reason === 'other' && !(s.otherReasonText || '').trim()));
+    if (noReason) {
+      this.dialog.show(`வேட்புமனு தாக்கல் செய்யாத சங்கத்திற்கு காரணத்தை தேர்வு செய்யவும்: ${noReason.society_name}`);
       return;
     }
 
@@ -285,14 +320,15 @@ export class Form4 implements OnInit {
     /* ===== EDIT MODE ===== */
     if (this.isEditMode) {
 
-      this.userService.editForm4(payload).subscribe((res: any) => {
+      // The edit API updates THIS Form4 — it needs its id
+      this.userService.editForm4({ ...payload, form4_id: this.editableForm4Id }).subscribe((res: any) => {
 
         if (res.success) {
 
           localStorage.setItem('form4_id', String(this.editableForm4Id));
           localStorage.setItem('form4_completed', 'true');
 
-          alert('✔ Form4 Updated Successfully');
+          this.dialog.show('✔ Form4 Updated Successfully');
           this.router.navigate(['/layout/totalforms']);
         }
       });
@@ -309,7 +345,7 @@ export class Form4 implements OnInit {
           localStorage.setItem('form4_id', res.data.form4_id);
           localStorage.setItem('form4_completed', 'true');
 
-          alert('✔ Form4 Submitted Successfully');
+          this.dialog.show('✔ Form4 Submitted Successfully');
           this.router.navigate(['/layout/totalforms']);
         }
       });

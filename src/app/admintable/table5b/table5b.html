@@ -2,37 +2,47 @@
 
     <div class="filter-section">
 
-        <label>Department:</label>
+        <div class="filter-item">
+            <label>Department:</label>
 
-        <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
-            <option value="">All</option>
-            <option *ngFor="let d of departmentList" [value]="d.name">
-                {{ d.name }}
-            </option>
-        </select>
+            <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
+                <option value="">All</option>
+                <option *ngFor="let d of departmentList" [value]="d.name">
+                    {{ d.name }}
+                </option>
+            </select>
+        </div>
 
-        <label>District:</label>
+        <div class="filter-item">
+            <label>District:</label>
 
-        <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
-            <option value="">All</option>
-            <option *ngFor="let d of districtList" [value]="d.name">
-                {{ d.name }}
-            </option>
-        </select>
+            <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
+                <option value="">All</option>
+                <option *ngFor="let d of districtList" [value]="d.name">
+                    {{ d.name }}
+                </option>
+            </select>
+        </div>
 
     </div>
 
-    <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
-        {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
-    </button>
+    <div class="action-group">
+        <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
+            {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+        </button>
 
-    <button class="export-btn" (click)="downloadPdf()">
-        📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
-    </button>
+        <button class="export-btn" (click)="downloadPdf()">
+            📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+        </button>
+    </div>
 
 </div>
 
 <!-- ABSTRACT (DISTRICT/ZONE-WISE SUMMARY) TABLE -->
+<!-- FORM HEADING (above the table) -->
+<h2 class="form-heading">படிவம் 6</h2>
+<div class="table-source">அட்டவணை 6 (பதிவு படிவம் 6-லிருந்து)</div>
+
 <div class="formt5b-container" *ngIf="viewMode === 'abstract'">
     <div class="table-scroll-wrapper">
         <table class="report-table abstract-table" id="abstractTable">
@@ -41,13 +51,13 @@
 
                 <tr class="top-header">
                     <th colspan="23">
-                        மாவட்டம் / சரகம் வாரியான சுருக்க எண்ணிக்கை விவரம்
+                        படிவம் 6 &nbsp;-&nbsp; வேட்புமனு பரிசீலனை மற்றும் தகுதிபெற்ற வேட்புமனுக்கள் பட்டியல் பற்றிய விவரங்கள் (சுருக்கம்)
                     </th>
                 </tr>
 
                 <tr class="top-sub-header">
                     <th colspan="23">
-                        துறை -- {{ department_name }}
+                        துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                     </th>
                 </tr>
 
@@ -99,6 +109,16 @@
                     <th>மொத்தம்</th>
                 </tr>
 
+                <tr class="col-number-row">
+                    <th class="col-number-cell">1</th>
+                    <th class="col-number-cell">2</th>
+                    <th class="col-number-cell">3</th>
+                    <th class="col-number-cell" colspan="5">4</th>
+                    <th class="col-number-cell" colspan="5">5</th>
+                    <th class="col-number-cell" colspan="5">6</th>
+                    <th class="col-number-cell" colspan="5">7</th>
+                </tr>
+
             </thead>
 
             <tbody>
@@ -141,7 +161,8 @@
 
                 <!-- GRAND TOTAL -->
                 <tr *ngIf="abstractRows.length > 0" class="grand-total-row">
-                    <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
+                    <td colspan="2" class="text-left"><strong>மொத்தம்</strong></td>
+                    <td><strong>{{ grandTotal.zone_count }}</strong></td>
 
                     <td><strong>{{ grandTotal.filedCount }}</strong></td>
                     <td><strong>{{ grandTotal.decSc }}</strong></td>
@@ -183,14 +204,14 @@
                 <!-- Title -->
                 <tr class="top-header">
                     <th colspan="24">
-                        வேட்புமனு பரிசீலனை மற்றும் தகுதிபெற்ற வேட்புமனுக்கள் பட்டியல் பற்றிய விவரங்கள்
+                        படிவம் 6 &nbsp;-&nbsp; வேட்புமனு பரிசீலனை மற்றும் தகுதிபெற்ற வேட்புமனுக்கள் பட்டியல் பற்றிய விவரங்கள்
                     </th>
                 </tr>
 
                 <!-- Department -->
                 <tr class="top-sub-header">
                     <th colspan="24">
-                        துறை -- {{ department_name }}
+                        துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                     </th>
                 </tr>
 
@@ -312,7 +333,7 @@
 
                 <!-- GRAND TOTAL -->
                 <tr *ngIf="tableRows.length > 0" class="grand-total-row">
-                    <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
+                    <td colspan="3" class="text-left"><strong>மொத்தம்</strong></td>
 
                     <td></td>
                     <td><strong>{{ grandTotal.decSc }}</strong></td>

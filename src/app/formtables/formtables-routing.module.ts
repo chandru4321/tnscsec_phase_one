@@ -46,11 +46,17 @@ const routes: Routes = [
     path: 'formt8', component: Formt8
   },
   {
-    path: 'formt9', component: formt9
+    path: 'formt9', component: formt9, data: { part: 'a' }   // படிவம் 14 (a)
+  },
+  {
+    path: 'formt9b', component: formt9, data: { part: 'b' }  // படிவம் 14 (b)
   },
   {
 
-    path: 'Formt10', component: Formt10
+    path: 'Formt10', component: Formt10, data: { part: 'a' }   // படிவம் 15 (a)
+  },
+  {
+    path: 'formt10b', component: Formt10, data: { part: 'b' }  // படிவம் 15 (b)
   }
 
 

@@ -5,6 +5,9 @@
         </button>
     </div>
 
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 8</h2>
+
     <div class="table-scroll-wrapper">
         <table class="report-table" id="reportTable">
 
@@ -12,15 +15,14 @@
 
                 <!-- TITLE -->
                 <tr class="top-header">
-                    <th colspan="15">
-                        வேட்புமனு திரும்பப் பெறுதல் மற்றும் போட்டியிடும் வேட்பாளர் இறுதிப் பட்டியல் பற்றிய பெயர்
-                        விவரங்கள்
+                    <th colspan="17">
+                        போட்டியின்றி தேர்ந்தெடுக்கப்பட்ட வேட்பாளர் பெயர் மற்றும் விவரம்
                     </th>
                 </tr>
 
                 <!-- DEPARTMENT -->
                 <tr class="top-sub-header">
-                    <th colspan="15">
+                    <th colspan="17">
                         துறை -- {{ department_name }}
                     </th>
                 </tr>
@@ -33,7 +35,7 @@
 
                     <th colspan="4">
                         போட்டியிடும் வேட்பாளர் இறுதி பட்டியலின்படி தேர்தலில் போட்டியிடும் சங்கங்கள் மற்றும்
-                        வேட்பாளர்கள் விபரம்
+                        வேட்பாளர்கள்
                     </th>
 
                     <th colspan="4">
@@ -43,8 +45,10 @@
 
                     <th colspan="4">
                         போட்டியிடும் இறுதி வேட்பாளர்கள் எண்ணிக்கையும் மற்றும் நிர்வாகக் குழு உறுப்பினர்கள்
-                        எண்ணிக்கையை விட குறைவாக இருந்து தேர்தலில் நடத்த இயலாத சங்கங்கள் விபரம்
+                        எண்ணிக்கையை விட குறைவாக இருந்து தேர்தலில் நடத்த இயலாத சங்கங்கள்
                     </th>
+
+                    <th colspan="2">தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்</th>
                 </tr>
 
                 <!-- SUB HEADER -->
@@ -65,6 +69,9 @@
                     <th>மகளிர்</th>
                     <th>பொது</th>
 
+                
+                    <th>சங்கத்தின் பெயர்</th>
+                    <th>காரணம்</th>
                 </tr>
 
                 <!-- COLUMN NUMBER ROW -->
@@ -75,13 +82,14 @@
                     <th class="col-number-cell" colspan="4">4</th>
                     <th class="col-number-cell" colspan="4">5</th>
                     <th class="col-number-cell" colspan="4">6</th>
+                    <th class="col-number-cell" colspan="2">7</th>
                 </tr>
 
             </thead>
 
             <tbody>
                 <tr *ngIf="tableRows.length === 0">
-                    <td colspan="15" class="empty-table-message">
+                    <td colspan="17" class="empty-table-message">
                         தயவுசெய்து முதலில் படிவம் 6-ஐ பூர்த்தி செய்யவும்.
                     </td>
                 </tr>
@@ -118,6 +126,10 @@
                     <td class="text-left col-namelist">{{ r.less_women_names }}</td>
                     <td class="text-left col-namelist">{{ r.less_general_names }}</td>
                     <!-- <td class="col-num">{{ r.less_total }}</td> -->
+
+                    <!-- Stopped in Form6: society + reason -->
+                    <td class="text-left col-name">{{ r.stopped_society_name }}</td>
+                    <td class="text-left col-name">{{ r.stop_reason }}</td>
 
                 </tr>
 

@@ -26,17 +26,23 @@
 
         </div>
 
-        <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
-            {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
-        </button>
+        <div class="action-group">
+            <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
+                {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+            </button>
 
-        <button class="export-btn" (click)="downloadPdf()">
-            📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
-        </button>
+            <button class="export-btn" (click)="downloadPdf()">
+                📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+            </button>
+        </div>
 
     </div>
 
     <!-- ABSTRACT (DISTRICT/ZONE-WISE SUMMARY) TABLE -->
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 7</h2>
+    <div class="table-source">அட்டவணை 7 (பதிவு படிவம் 7-லிருந்து)</div>
+
     <div class="table-scroll-wrapper" *ngIf="viewMode === 'abstract'">
 
         <table class="report-table abstract-table" id="abstractTable">
@@ -44,33 +50,102 @@
             <thead>
 
                 <tr class="top-header">
-                    <th colspan="7">
-                        மாவட்டம் / சரகம் வாரியான சுருக்க எண்ணிக்கை விவரம்
+                    <th colspan="43">
+                        படிவம் 7 &nbsp;-&nbsp; வேட்புமனு திரும்பப் பெறுதல் மற்றும் போட்டியிடும் வேட்பாளர் இறுதிப் பட்டியல் பற்றிய எண்ணிக்கை விவரங்கள் (சுருக்கம்)
                     </th>
                 </tr>
 
                 <tr class="top-sub-header">
-                    <th colspan="7">
-                        துறை -- {{ department_name }}
+                    <th colspan="43">
+                        துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                     </th>
                 </tr>
 
+                <!-- GROUP HEADER (same groups as the Full List) -->
                 <tr class="main-header">
-                    <th>வ.எண்</th>
-                    <th>மாவட்டம்</th>
-                    <th>சரகம்</th>
-                    <th>சங்கங்களின் எண்ணிக்கை</th>
-                    <th>வாக்குப்பதிவு நடைபெற வேண்டிய சங்கங்கள்</th>
-                    <th>போட்டியின்றி தேர்ந்தெடுக்கப்பட்ட சங்கங்கள்</th>
-                    <th>தகுதியற்ற சங்கங்கள்</th>
+                    <th rowspan="2">வ. எண்</th>
+                    <th rowspan="2">மாவட்டம்</th>
+                    <th rowspan="2">சரகம்</th>
+
+                    <th colspan="4">
+                        மொத்த நிர்வாகக்குழு உறுப்பினர்களின் எண்ணிக்கை
+                    </th>
+
+                    <th colspan="5">
+                        தகுதிபெற்ற வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுக்களின் எண்ணிக்கை
+                    </th>
+
+                    <th colspan="5">
+                        தகுதி பெற்ற வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுவை திரும்பப் பெற்ற வேட்பாளர்களின் எண்ணிக்கை
+                    </th>
+
+                    <th colspan="5">
+                        தகுதி பெற்ற வேட்பு மனுக்களின் இறுதி எண்ணிக்கை
+                        (Column 5 - Column 6)
+                    </th>
+
+                    <th colspan="5">
+                        போட்டியிடும் இறுதி வேட்பாளர்கள் எண்ணிக்கையும் மற்றும் நிர்வாகக் குழு உறுப்பினர்கள்
+                        எண்ணிக்கையும் சமமாக இருப்பதால் தேர்தலில் போட்டியில்லாத சங்கங்கள் விபரம்
+                    </th>
+
+                    <th colspan="5">
+                        போட்டியிடும் இறுதி வேட்பாளர்கள் எண்ணிக்கை நிர்வாகக் குழு உறுப்பினர்கள் எண்ணிக்கையைவிட
+                        குறைவாக இருப்பதால் தேர்தல் இல்லாத சங்கங்கள் விபரம்
+                    </th>
+
+                    <th colspan="5">
+                        போட்டியின்றி தேர்ந்தெடுக்கப்பட்டதாக அறிவிக்கப்பட்ட சங்கங்கள் விபரம்
+                    </th>
+
+                    <th colspan="5">
+                        இறுதி வேட்பாளர் பட்டியல்படி வாக்குப்பதிவு நடைபெற வேண்டிய சங்கங்கள் விபரம்
+                    </th>
+
+                    <th>
+                        தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்
+                    </th>
+                </tr>
+
+                <!-- SUB HEADER -->
+                <tr class="sub-header">
+                    <th>ப.இ./ப.கு</th>
+                    <th>மகளிர்</th>
+                    <th>பொது</th>
+                    <th>மொத்தம்</th>
+                    <ng-container *ngFor="let k of fiveColumnGroups">
+                        <th>சங்கங்கள்</th>
+                        <th>ப.இ./ப.கு</th>
+                        <th>மகளிர்</th>
+                        <th>பொது</th>
+                        <th>மொத்தம்</th>
+                    </ng-container>
+
+                    <th>சங்கங்கள்</th>
+                </tr>
+
+                <!-- COLUMN NUMBER ROW -->
+                <tr class="col-number-row">
+                    <th class="col-number-cell">1</th>
+                    <th class="col-number-cell">2</th>
+                    <th class="col-number-cell">3</th>
+                    <th class="col-number-cell" colspan="4">4</th>
+                    <th class="col-number-cell" colspan="5">5</th>
+                    <th class="col-number-cell" colspan="5">6</th>
+                    <th class="col-number-cell" colspan="5">7</th>
+                    <th class="col-number-cell" colspan="5">8</th>
+                    <th class="col-number-cell" colspan="5">9</th>
+                    <th class="col-number-cell" colspan="5">10</th>
+                    <th class="col-number-cell" colspan="5">11</th>
+                    <th class="col-number-cell">12</th>
                 </tr>
 
             </thead>
 
             <tbody>
                 <tr *ngIf="abstractRows.length === 0">
-                    <td colspan="7" class="empty-table-message">
-                        தயவுசெய்து முதலில் படிவம் 6-ஐ பூர்த்தி செய்யவும்.
+                    <td colspan="43" class="empty-table-message">
+                        தயவுசெய்து முதலில் படிவம் 7-ஐ பூர்த்தி செய்யவும்.
                     </td>
                 </tr>
 
@@ -78,19 +153,42 @@
                     <td>{{ i + 1 }}</td>
                     <td class="text-left">{{ a.district_name }}</td>
                     <td class="text-left">{{ a.zone_name }}</td>
-                    <td>{{ a.society_count }}</td>
-                    <td>{{ a.qualified_count }}</td>
-                    <td>{{ a.unopposed_count }}</td>
-                    <td>{{ a.unqualified_count }}</td>
+
+                    <td>{{ a.seats.sc }}</td>
+                    <td>{{ a.seats.women }}</td>
+                    <td>{{ a.seats.general }}</td>
+                    <td>{{ a.seats.total }}</td>
+
+                    <ng-container *ngFor="let k of fiveColumnGroups">
+                        <td>{{ a[k].soc }}</td>
+                        <td>{{ a[k].sc }}</td>
+                        <td>{{ a[k].women }}</td>
+                        <td>{{ a[k].general }}</td>
+                        <td>{{ a[k].total }}</td>
+                    </ng-container>
+
+                    <td>{{ a.stopped }}</td>
                 </tr>
 
                 <!-- GRAND TOTAL -->
                 <tr *ngIf="abstractRows.length > 0" class="grand-total-row">
-                    <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
-                    <td><strong>{{ grandTotal.society_count }}</strong></td>
-                    <td><strong>{{ grandTotal.qualified_count }}</strong></td>
-                    <td><strong>{{ grandTotal.unopposed_count }}</strong></td>
-                    <td><strong>{{ grandTotal.unqualified_count }}</strong></td>
+                    <td colspan="2" class="text-left"><strong>மொத்தம்</strong></td>
+                    <td><strong>{{ grandTotal.zone_count }}</strong></td>
+
+                    <td><strong>{{ grandTotal.seats.sc }}</strong></td>
+                    <td><strong>{{ grandTotal.seats.women }}</strong></td>
+                    <td><strong>{{ grandTotal.seats.general }}</strong></td>
+                    <td><strong>{{ grandTotal.seats.total }}</strong></td>
+
+                    <ng-container *ngFor="let k of fiveColumnGroups">
+                        <td><strong>{{ grandTotal[k].soc }}</strong></td>
+                        <td><strong>{{ grandTotal[k].sc }}</strong></td>
+                        <td><strong>{{ grandTotal[k].women }}</strong></td>
+                        <td><strong>{{ grandTotal[k].general }}</strong></td>
+                        <td><strong>{{ grandTotal[k].total }}</strong></td>
+                    </ng-container>
+
+                    <td><strong>{{ grandTotal.stopped }}</strong></td>
                 </tr>
             </tbody>
 
@@ -106,16 +204,15 @@
 
                 <!-- TITLE -->
                 <tr class="top-header">
-                    <th colspan="39">
-                        வேட்புமனு திரும்பப் பெறுதல் மற்றும் போட்டியிடும் வேட்பாளர் இறுதிப் பட்டியல் பற்றிய எண்ணிக்கை
-                        விவரங்கள்
+                    <th colspan="44">
+                        படிவம் 7 &nbsp;-&nbsp; வேட்புமனு திரும்பப் பெறுதல் மற்றும் போட்டியிடும் வேட்பாளர் இறுதிப் பட்டியல் பற்றிய எண்ணிக்கை விவரங்கள்
                     </th>
                 </tr>
 
                 <!-- DEPARTMENT -->
                 <tr class="top-sub-header">
-                    <th colspan="39">
-                        துறை -- {{ department_name }}
+                    <th colspan="44">
+                        துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                     </th>
                 </tr>
 
@@ -126,16 +223,20 @@
                     <th rowspan="2" class="col-medium">மாவட்ட தேர்தல் அலுவலர் சரகம்</th>
 
                     <th colspan="4">
-                        போட்டியிடும் வேட்பாளர் இறுதி பட்டியலின்படி தேர்தலில் போட்டியிடும் சங்கங்கள் மற்றும் வேட்பாளர்கள்
-                        விபரம்
+                        மொத்த நிர்வாகக்குழு உறுப்பினர்களின் எண்ணிக்கை
                     </th>
 
                     <th colspan="5">
-                        செல்லத்தக்க வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுக்களின் எண்ணிக்கை
+                        தகுதிபெற்ற வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுக்களின் எண்ணிக்கை
                     </th>
 
                     <th colspan="5">
-                        செல்லத்தக்க வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுவை திரும்பப் பெற்ற வேட்பாளர்களின் எண்ணிக்கை
+                        தகுதி பெற்ற வேட்பு மனுக்கள் பட்டியல்படி வேட்பு மனுவை திரும்பப் பெற்ற வேட்பாளர்களின் எண்ணிக்கை
+                    </th>
+
+                    <th colspan="5">
+                        தகுதி பெற்ற வேட்பு மனுக்களின் இறுதி எண்ணிக்கை
+                        (Column 5 - Column 6)
                     </th>
 
                     <th colspan="5">
@@ -163,6 +264,10 @@
 
                 <!-- SUB HEADER -->
                 <tr class="sub-header">
+                    <th>ப.இ./ப.கு</th>
+                    <th>மகளிர்</th>
+                    <th>பொது</th>
+                    <th>மொத்தம்</th>
 
                     <th>சங்கங்கள்</th>
                     <th>ப.இ./ப.கு</th>
@@ -174,6 +279,7 @@
                     <th>ப.இ./ப.கு</th>
                     <th>மகளிர்</th>
                     <th>பொது</th>
+                    <th>மொத்தம்</th>
 
                     <th>சங்கங்கள்</th>
                     <th>ப.இ./ப.கு</th>
@@ -210,19 +316,35 @@
 
                 </tr>
 
+                <!-- COLUMN NUMBER ROW -->
+                <tr class="col-number-row">
+                    <th class="col-number-cell">1</th>
+                    <th class="col-number-cell">2</th>
+                    <th class="col-number-cell">3</th>
+                    <th class="col-number-cell" colspan="4">4</th>
+                    <th class="col-number-cell" colspan="5">5</th>
+                    <th class="col-number-cell" colspan="5">6</th>
+                    <th class="col-number-cell" colspan="5">7</th>
+                    <th class="col-number-cell" colspan="5">8</th>
+                    <th class="col-number-cell" colspan="5">9</th>
+                    <th class="col-number-cell" colspan="5">10</th>
+                    <th class="col-number-cell" colspan="5">11</th>
+                    <th class="col-number-cell" colspan="2">12</th>
+                </tr>
+
             </thead>
 
             <tbody>
                 <tr *ngIf="tableRows.length === 0">
-                    <td colspan="39" class="empty-table-message">
-                        தயவுசெய்து முதலில் படிவம் 6-ஐ பூர்த்தி செய்யவும்.
+                    <td colspan="44" class="empty-table-message">
+                        தயவுசெய்து முதலில் படிவம் 7-ஐ பூர்த்தி செய்யவும்.
                     </td>
                 </tr>
 
-                <tr *ngFor="let r of tableRows; let i = index">
+                <tr *ngFor="let r of tableRows">
 
                     <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan" class="col-small">
-                        {{ i + 1 }}
+                        {{ r.serial }}
                     </td>
 
                     <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan" class="col-medium">
@@ -233,13 +355,13 @@
                         {{ r.zone_name }}
                     </td>
 
-                    <!-- Final candidate list (names, not counts) -->
-                    <td class="text-left col-name">{{ r.society_name }}</td>
-                    <td class="text-left col-namelist">{{ r.dec_sc_names }}</td>
-                    <td class="text-left col-namelist">{{ r.dec_women_names }}</td>
-                    <td class="text-left col-namelist">{{ r.dec_general_names }}</td>
+                    <!-- Total committee members (Form4 seats) -->
+                    <td class="col-num">{{ r.seat_sc }}</td>
+                    <td class="col-num">{{ r.seat_women }}</td>
+                    <td class="col-num">{{ r.seat_general }}</td>
+                    <td class="col-num">{{ r.seat_total }}</td>
 
-                    <!-- Count of the final candidate list above -->
+                    <!-- Qualified nominations count -->
                     <td class="text-left col-name">{{ r.count_society_name }}</td>
                     <td class="col-num">{{ r.count_sc }}</td>
                     <td class="col-num">{{ r.count_women }}</td>
@@ -252,6 +374,13 @@
                     <td class="col-num">{{ r.w_women }}</td>
                     <td class="col-num">{{ r.w_general }}</td>
                     <td class="col-num">{{ r.w_total }}</td>
+
+                    <!-- Final qualified count (valid − withdrawn) -->
+                    <td class="text-left col-name">{{ r.fin_society_name }}</td>
+                    <td class="col-num">{{ r.fin_sc }}</td>
+                    <td class="col-num">{{ r.fin_women }}</td>
+                    <td class="col-num">{{ r.fin_general }}</td>
+                    <td class="col-num">{{ r.fin_total }}</td>
 
                     <!-- Unopposed (equal) -->
                     <td class="text-left col-name">{{ r.eq_society_name }}</td>

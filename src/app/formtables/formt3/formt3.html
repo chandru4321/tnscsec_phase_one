@@ -8,6 +8,9 @@
     </div>
 
     <!-- Scroll wrapper -->
+    <!-- FORM HEADING (above the table) -->
+    <h2 class="form-heading">படிவம் 3</h2>
+
     <div class="table-scroll-wrapper">
 
         <table class="report-table" id="reportTable">
@@ -16,14 +19,14 @@
 
                 <!-- Title -->
                 <tr class="top-header">
-                    <th colspan="13">
+                    <th colspan="15">
                         இறுதி வாக்காளர் பட்டியல் வாக்காளர் பட்டியல் அலுவலரால் வெளியிடப்பட்ட விவரம்
                     </th>
                 </tr>
 
                 <!-- Department -->
                 <tr class="top-sub-header">
-                    <th colspan="13">
+                    <th colspan="15">
                         துறை -- {{ department_name }}
                     </th>
                 </tr>
@@ -65,6 +68,8 @@
                     <th rowspan="2">
                         வாக்காளர் பட்டியல் அலுவலரால் இறுதி செய்யப்பட்ட வாக்காளர் பட்டியல் படி சங்க வாரியாக
                         வாக்காளர்களின் எண்ணிக்கை </th>
+
+                    <th colspan="2">தேர்தல் நிறுத்தப்பட்ட சங்கங்கள்</th>
                 </tr>
 
                 <!-- Sub Header -->
@@ -73,6 +78,8 @@
                     <th class="vertical-header">வ.எண் 5-ன் படி</th>
                     <th>சேர்க்கப்பட்ட உறுப்பினர்களின் எண்ணிக்கை</th>
                     <th>நீக்கப்பட்ட உறுப்பினர்களின் எண்ணிக்கை</th>
+                    <th>சங்கத்தின் பெயர்</th>
+                    <th>காரணம்</th>
                 </tr>
 
                 <!-- Column Number Row -->
@@ -88,13 +95,14 @@
                     <th class="col-number-cell">9</th>
                     <th class="col-number-cell" colspan="2">10</th>
                     <th class="col-number-cell">11</th>
+                    <th class="col-number-cell" colspan="2">12</th>
                 </tr>
 
             </thead>
 
             <tbody>
                 <tr *ngIf="tableRows.length === 0">
-                    <td colspan="13" class="empty-table-message">
+                    <td colspan="15" class="empty-table-message">
                         தயவுசெய்து முதலில் படிவம் 3-ஐ பூர்த்தி செய்யவும்.
                     </td>
                 </tr>
@@ -116,13 +124,13 @@
                         {{ r.member_society_name ?? '-' }}
                     </td>
 
-                    <td>{{ r.member_count }}</td>
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.member_count }}</td>
 
                     <td class="wrap-col text-left">
                         {{ r.non_member_society_name ?? '-' }}
                     </td>
 
-                    <td>{{ r.non_member_count }}</td>
+                    <td *ngIf="r.rowSpan" [attr.rowspan]="r.rowSpan">{{ r.non_member_count }}</td>
 
                     <td>{{ r.member_society_name ? (r.ass_memlist ?? '✘') : '' }}</td>
                     <td>{{ r.non_member_society_name ? (r.ass_memlist ?? '✘') : '' }}</td>
@@ -140,6 +148,9 @@
                     <td>{{ r.jcount }}</td>
 
                     <td>{{ r.total ?? '✘' }}</td>
+
+                    <td class="wrap-col text-left">{{ r.stopped_society_name }}</td>
+                    <td class="wrap-col text-left">{{ r.stop_reason_display }}</td>
 
                 </tr>
 

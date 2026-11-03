@@ -20,6 +20,9 @@ interface TableRow {
   votes_obtained: number | string;
   total_count: number;
 
+  // Election stopped at vote counting: "society — reason"
+  stopped: string;
+
   rowSpan?: number;
 }
 
@@ -93,6 +96,7 @@ export class Formt8 implements OnInit {
               category_label: c.label,
               votes_obtained: c.votes,
               total_count: total,
+              stopped: soc.is_stopped ? `${soc.society_name || '-'} — ${soc.stop_reason_label || '-'}` : '-',
 
               rowSpan: index === 0 ? list.length : undefined
             });

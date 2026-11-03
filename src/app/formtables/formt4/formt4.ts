@@ -124,8 +124,12 @@ export class Formt4 implements OnInit {
         const rural = soc.rural_counts || {};
         const declared = soc.declared_counts || {};
 
+        // A stopped society still filed real nominations — is_stopped only
+        // means the election was halted afterward (e.g. at polling), not
+        // that it was never filed — so it must still show here, same as
+        // any other filed society with declared candidates.
         const showDeclared =
-          soc._isFiled && soc.is_stopped !== true && hasDeclaredCandidates(soc);
+          soc._isFiled && hasDeclaredCandidates(soc);
 
         rows.push({
           district_name: item.district?.name,

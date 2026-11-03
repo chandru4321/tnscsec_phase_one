@@ -2,40 +2,52 @@
 
     <div class="filter-section">
 
-        <label>Department:</label>
+        <div class="filter-item">
+            <label>Department:</label>
 
-        <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
-            <option value="">All</option>
-            <option *ngFor="let d of departmentList" [value]="d.name">
-                {{ d.name }}
-            </option>
-        </select>
+            <select [(ngModel)]="selectedDepartment" (change)="applyFilter()">
+                <option value="">All</option>
+                <option *ngFor="let d of departmentList" [value]="d.name">
+                    {{ d.name }}
+                </option>
+            </select>
+        </div>
 
-        <label>District:</label>
+        <div class="filter-item">
+            <label>District:</label>
 
-        <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
-            <option value="">All</option>
-            <option *ngFor="let d of districtList" [value]="d.name">
-                {{ d.name }}
-            </option>
-        </select>
+            <select [(ngModel)]="selectedDistrict" (change)="applyFilter()">
+                <option value="">All</option>
+                <option *ngFor="let d of districtList" [value]="d.name">
+                    {{ d.name }}
+                </option>
+            </select>
+        </div>
 
         <!-- <button (click)="clearFilter()">Clear</button> -->
 
     </div>
-    <!-- <button class="action-btn export-btn" (click)="exportToExcel()">
-        ⬇ Export Excel
-    </button> -->
-    <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
-        {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
-    </button>
 
-    <button class="export-btn" (click)="downloadPdf()">
-        📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
-    </button>
+    <div class="action-group">
+        <!-- <button class="action-btn export-btn" (click)="exportToExcel()">
+            ⬇ Export Excel
+        </button> -->
+        <button class="action-btn view-toggle-btn" (click)="toggleViewMode()">
+            {{ viewMode === 'full' ? '📊 சுருக்க அட்டவணை (Abstract)' : '📋 முழு அட்டவணை (Full List)' }}
+        </button>
+
+        <button class="export-btn" (click)="downloadPdf()">
+            📄 {{ viewMode === 'abstract' ? 'Download Abstract PDF' : 'Download PDF' }}
+        </button>
+    </div>
+
 </div>
 
 <!-- ABSTRACT (DISTRICT/ZONE-WISE SUMMARY) TABLE -->
+<!-- FORM HEADING (above the table) -->
+<h2 class="form-heading">படிவம் 2</h2>
+<div class="table-source">அட்டவணை 2 (பதிவு படிவம் 2-லிருந்து)</div>
+
 <div class="table-scroll-wrapper" *ngIf="viewMode === 'abstract'">
 
     <table class="report-table abstract-table" id="abstractTable">
@@ -44,13 +56,13 @@
 
             <tr class="top-header">
                 <th colspan="10">
-                    மாவட்டம் / சரகம் வாரியான சுருக்க எண்ணிக்கை விவரம்
+                    படிவம் 2 &nbsp;-&nbsp; சங்கம் உறுப்பினர் பட்டியல் வெளியிடுதல் மற்றும் வாக்காளர் பட்டியல் அலுவலருக்கு உறுப்பினர் பட்டியல் அளித்த/அளிக்காத சங்கங்கள் விவரம் (சுருக்கம்)
                 </th>
             </tr>
 
             <tr class="top-sub-header">
                 <th colspan="10">
-                    துறை -- {{ department_name }}
+                    துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                 </th>
             </tr>
 
@@ -87,6 +99,16 @@
                 <th>உறுப்பினர் எண்ணிக்கை</th>
             </tr>
 
+            <tr class="col-number-row">
+                <th class="col-number-cell">1</th>
+                <th class="col-number-cell">2</th>
+                <th class="col-number-cell">3</th>
+                <th class="col-number-cell">4</th>
+                <th class="col-number-cell" colspan="2">5</th>
+                <th class="col-number-cell" colspan="2">6</th>
+                <th class="col-number-cell" colspan="2">7</th>
+            </tr>
+
         </thead>
 
         <tbody>
@@ -115,7 +137,8 @@
 
             <!-- GRAND TOTAL -->
             <tr *ngIf="abstractRows.length > 0" class="grand-total-row">
-                <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
+                <td colspan="2" class="text-left"><strong>மொத்தம்</strong></td>
+                <td><strong>{{ grandTotal.zone_count }}</strong></td>
                 <td><strong>{{ grandTotal.requiredCount }}</strong></td>
                 <td><strong>{{ grandTotal.preparedCount }}</strong></td>
                 <td><strong>{{ grandTotal.preparedVoterTotal }}</strong></td>
@@ -139,13 +162,13 @@
             <!-- TOP HEADER -->
             <tr class="top-header">
                 <th colspan="10">
-                    சங்கம் உறுப்பினர் பட்டியல் வெளியிடுதல் மற்றும் வாக்காளர் பட்டியல் அலுவலருக்கு உறுப்பினர் பட்டியல்
-                    அளித்த/அளிக்காத சங்கங்கள் விவரம் </th>
+                    படிவம் 2 &nbsp;-&nbsp; சங்கம் உறுப்பினர் பட்டியல் வெளியிடுதல் மற்றும் வாக்காளர் பட்டியல் அலுவலருக்கு உறுப்பினர் பட்டியல் அளித்த/அளிக்காத சங்கங்கள் விவரம்
+                </th>
             </tr>
             <!-- SUB HEADER -->
             <tr class="top-sub-header">
                 <th colspan="10">
-                    துறை -- {{ department_name }}
+                    துறை -- {{ selectedDepartment || department_name || 'அனைத்தும்' }}
                 </th>
             </tr>
 
@@ -263,7 +286,7 @@
             <!-- GRAND TOTAL (sums every district currently shown, i.e.
                  respects the Department/District filter above) -->
             <tr *ngIf="tableRows.length > 0" class="grand-total-row">
-                <td colspan="3" class="text-left"><strong>மொத்தம் (அனைத்து மாவட்டங்களும்)</strong></td>
+                <td colspan="3" class="text-left"><strong>மொத்தம்</strong></td>
                 <td></td>
                 <td><strong>{{ grandTotal.preparedVoterTotal }}</strong></td>
                 <td></td>

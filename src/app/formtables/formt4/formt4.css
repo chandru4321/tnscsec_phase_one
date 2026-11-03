@@ -114,3 +114,57 @@
     top: 40px;
     z-index: 29;
 }
+/* Title row at the left edge, so it is visible without scrolling on a
+   wide table (centred, it sits off-screen on phones) */
+.top-header th {
+    text-align: left !important;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+
+    .page-content {
+        padding: 12px 8px 70px;   /* bottom room for the fixed footer */
+    }
+
+    .table-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .table-actions button,
+    .table-actions a,
+    .action-btn,
+    .export-btn {
+        min-height: 40px;
+    }
+}
+
+/* Scroll box ends above the fixed footer, so its bottom scrollbar is
+   always reachable; visible green scrollbars like the other tables */
+.table-scroll-wrapper {
+    max-height: calc(100vh - 250px);
+    scrollbar-width: auto;
+    scrollbar-color: #4d7c0f #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+    background: #e5f7e5;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #4d7c0f;
+    border-radius: 7px;
+    border: 3px solid #e5f7e5;
+}
+
+@media (max-width: 768px) {
+    .table-scroll-wrapper {
+        max-height: calc(100vh - 300px);
+    }
+}

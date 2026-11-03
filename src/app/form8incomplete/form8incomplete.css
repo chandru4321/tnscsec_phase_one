@@ -1,0 +1,18 @@
+/* Base styles from form8names.css / form8counts.css; extras here */
+
+.incomplete-table {
+    min-width: 1500px;
+}
+
+.tick {
+    color: #15803d;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.signature {
+    margin-top: 40px;
+    text-align: right;
+    font-weight: 700;
+    padding-right: 40px;
+}
